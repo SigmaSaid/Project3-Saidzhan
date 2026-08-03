@@ -32,12 +32,25 @@ def extract_document(
     example: dict[str, Any] | str, html_str: str | None = None
 ) -> DocumentRecord:
     """Extract structured document record from HTML text or input dict."""
-    if isinstance(example, str):
-        input_url = normalize_url(example) or ""
-        raw_html = str(html_str or "")
-    else:
-        input_url = normalize_url(example.get("url") or example.get("input_url")) or ""
-        raw_html = str(example.get("html") or example.get("content") or "")
+if isinstance(example, str):
+    input_url = normalize_url(example) or ""
+    raw_html = str(html_str or "")
+else:
+    input_url = normalize_url(
+        example.get("url")
+        or example.get("input_url")
+        or example.get("source_url")
+        or ""
+    ) or ""
+
+    raw_html = str(
+        example.get("html")
+        or example.get("content")
+        or example.get("text")
+        or example.get("html_content")
+        or example.get("article_html")
+        or ""
+    )
  
     source_sha256 = hashlib.sha256(raw_html.encode("utf-8")).hexdigest()
     soup = BeautifulSoup(raw_html, "lxml")

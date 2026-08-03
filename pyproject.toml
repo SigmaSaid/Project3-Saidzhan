@@ -1,0 +1,93 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ice-news-pipeline"
+version = "1.0.0"
+description = "A Python project for extracting and checking ICE press-release HTML."
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+license = { text = "MIT" }
+authors = [
+  { name = "Saidzhan" }
+]
+keywords = ["data-journalism", "information-extraction", "ice", "huggingface"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Text Processing :: Markup :: HTML",
+]
+dependencies = [
+  "beautifulsoup4>=4.12,<5",
+  "datasets>=3.0,<5",
+  "lxml>=5.2,<7",
+  "matplotlib>=3.9,<4",
+  "pandas>=2.2,<3",
+  "pyarrow>=17,<24",
+]
+
+[project.urls]
+Homepage = "https://github.com/SigmaSaid/Project3"
+Repository = "https://github.com/SigmaSaid/Project3"
+Dataset = "https://huggingface.co/datasets/stanforddams/biglocal"
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2,<2",
+  "mypy>=1.13,<2",
+  "pandas-stubs>=2.2",
+  "pytest>=8.3,<10",
+  "pytest-cov>=5,<8",
+  "ruff>=0.8,<1",
+  "types-beautifulsoup4>=4.12",
+]
+
+[project.scripts]
+ice-news-pipeline = "ice_news_pipeline.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+ice_news_pipeline = ["py.typed"]
+
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra --strict-config --strict-markers"
+testpaths = ["tests"]
+markers = [
+  "integration: requires network access to Hugging Face",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["ice_news_pipeline"]
+
+[tool.coverage.report]
+fail_under = 75
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["B", "C4", "E", "F", "I", "N", "RUF", "SIM", "UP"]
+ignore = ["E501", "RUF001"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ice_news_pipeline"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+packages = ["ice_news_pipeline"]

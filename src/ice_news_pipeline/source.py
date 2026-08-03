@@ -3,7 +3,12 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Dict, List, Union
+from dataclasses import dataclass, field
 
+
+@dataclass
+class LoadedInputs:
+    records: List[Dict[str, str]] = field(default_factory=list)
 
 def load_local_inputs(input_path: Union[str, Path]) -> List[Dict[str, str]]:
     """Loads local HTML files or raw text documents from a given directory or file path.

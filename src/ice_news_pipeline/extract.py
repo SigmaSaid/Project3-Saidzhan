@@ -225,21 +225,30 @@ def extract_document(
         flags.append("unexpected_url_path")
     if canonical and input_url and canonical != input_url:
         flags.append("canonical_url_mismatch")
-    if (
-        input_url
-        and urlsplit(input_url).netloc.casefold() not in {"ice.gov", "www.ice.gov"}
-    ):
-        flags.append("unexpected_source_domain")
+   if (
+    input_url
+    and urlsplit(input_url).netloc.casefold() not in {"ice.gov", "www.ice.gov"}
+):
+    flags.append("unexpected_source_domain")
 
-    quarantine_reasons = {
-        "missing_title",
-        "missing_published_date",
-        "missing_body",
-        "short_body",
-        "unexpected_url_path",
-        "canonical_url_mismatch",
-        "unexpected_source_domain",
-    }
+
+print("DEBUG URL:", input_url)
+print("DEBUG TITLE:", title)
+print("DEBUG DATE:", published_date)
+print("DEBUG BODY LENGTH:", len(body_text or ""))
+print("DEBUG TOPICS:", topics)
+print("DEBUG FLAGS:", flags)
+
+
+quarantine_reasons = {
+    "missing_title",
+    "missing_published_date",
+    "missing_body",
+    "short_body",
+    "unexpected_url_path",
+    "canonical_url_mismatch",
+    "unexpected_source_domain",
+}
     quarantined = bool(quarantine_reasons.intersection(flags)) or any(
         flag.startswith("unexpected_entity_bundle:") for flag in flags
     )

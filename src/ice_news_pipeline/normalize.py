@@ -52,32 +52,22 @@ def normalize_text(value: Any, *, preserve_lines: bool = False) -> str | None:
     return normalized or None
 
 
-def normalize_url(value: Any) -> str | None:
-    if not value:
+def normalize_url(url: str | None):
+    if not url:
         return None
 
-    value = str(value).strip()
+    url = url.strip()
 
-    if not value.startswith(("http://", "https://")):
-        value = "https://" + value
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
 
-    parsed = urlsplit(value)
+    parts = urlsplit(url)
 
-    scheme = parsed.scheme.lower()
-    netloc = parsed.netloc.lower()
-
-    path = parsed.path.rstrip("/")
-
-    return urlunsplit(
-        (
-            scheme,
-            netloc,
-            path,
-            "",
-            ""
-        )
+    return (
+        f"{parts.scheme.lower()}://"
+        f"{parts.netloc.lower()}"
+        f"{parts.path.rstrip('/')}"
     )
-
     
     text_clean = re.sub(r"^https?://", "", text, flags=re.IGNORECASE)
     return text_clean.rstrip("/")

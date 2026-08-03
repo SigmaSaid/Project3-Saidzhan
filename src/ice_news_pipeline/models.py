@@ -16,14 +16,7 @@ class GateStatus(str, Enum):
     PASS = "PASS"
     FAIL = "FAIL"
     WARN = "WARN"
-    
-@dataclass
-class FieldMetric:
-    field_name: str
-    exact_matches: int = 0
-    total: int = 0
-    accuracy: float = 0.0
-
+    SKIPPED = "SKIPPED"
 
 @dataclass
 class EventCandidate:

@@ -49,7 +49,7 @@ def load_local_inputs(
         raw=raw,
         reference=reference,
         metadata={
-            "source": "local",
+            "source": "local_jsonl",
             "raw_path": str(raw_path),
             "reference_path": str(reference_path)
             if reference_path

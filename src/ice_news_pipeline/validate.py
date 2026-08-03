@@ -627,7 +627,7 @@ def validate_pipeline(
     return ValidationResult(
         status=overall_status,
         gates=gates,
-        field_metrics=metrics,
+        field_metrics=field_metrics,
         reference_profile=reference_profile,
         document_profile=document_profile,
         body_similarity=body_similarity,

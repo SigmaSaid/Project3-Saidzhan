@@ -86,7 +86,7 @@ ignore = ["E501", "RUF001"]
 known-first-party = ["ice_news_pipeline"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 strict = true
 warn_unused_ignores = true
 ignore_missing_imports = true

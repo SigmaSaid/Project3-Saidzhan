@@ -40,7 +40,6 @@ else:
         example.get("url")
         or example.get("input_url")
         or example.get("source_url")
-        or ""
     ) or ""
 
     raw_html = str(

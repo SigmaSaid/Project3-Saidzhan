@@ -60,8 +60,8 @@ class ICEDocument:
     document_type: str = "news_release"
     is_quarantined: bool = False
     quarantine_reason: Optional[str] = None
-    
-    # Дополнительные поля для совместимости с глубоким аудитом и валидацией
+
+    # Поля для расширенной валидации и аудита
     document_id: Optional[str] = None
     input_url: Optional[str] = None
     description: Optional[str] = None

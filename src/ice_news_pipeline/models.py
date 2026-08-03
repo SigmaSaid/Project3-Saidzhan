@@ -130,6 +130,28 @@ class ICEDocument:
             "field_provenance": self.field_provenance,
             "field_confidence": self.field_confidence,
         }
+        
+@dataclass
+class FieldMetric:
+    field_name: str = ""
+    total: int = 0
+    matched: int = 0
+    missing: int = 0
+    accuracy: float = 0.0
 
+
+@dataclass
+class ValidationGate:
+    name: str = ""
+    status: GateStatus = GateStatus.SKIPPED
+    message: str = ""
+
+
+@dataclass
+class ValidationResult:
+    passed: bool = False
+    gates: List[ValidationGate] = field(default_factory=list)
+    field_metrics: List[FieldMetric] = field(default_factory=list)
+    summary: Dict[str, Any] = field(default_factory=dict)
 
 DocumentRecord = ICEDocument

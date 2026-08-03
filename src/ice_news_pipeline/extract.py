@@ -204,13 +204,13 @@ def extract_document(
         provenance["image_urls"] = "css:.nr-image-container img,.nr-body img"
         confidences["image_urls"] = 1.0
 
-   entity_bundle = normalize_text(data_layer.get("entityBundle"))
-if entity_bundle:
-    provenance["entity_bundle"] = "json:dataLayer.entityBundle"
-    confidences["entity_bundle"] = 1.0
+    entity_bundle = normalize_text(data_layer.get("entityBundle"))
+    if entity_bundle:
+        provenance["entity_bundle"] = "json:dataLayer.entityBundle"
+        confidences["entity_bundle"] = 1.0
 
-print("DEBUG ENTITY:", entity_bundle)
-
+    print("DEBUG ENTITY:", entity_bundle)
+    
     if not title:
         flags.append("missing_title")
     if not published_date:

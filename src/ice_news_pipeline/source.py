@@ -57,13 +57,19 @@ def load_local_inputs(
 
 
 def load_huggingface_inputs(
+    dataset_id: str,
+    revision: str | None = None,
+    split: str = "train",
     limit: int | None = None,
+    cache_dir: str | Path | None = None,
 ) -> LoadedInputs:
     from datasets import load_dataset
 
     dataset = load_dataset(
-        "stanforddams/biglocal",
-        split="train",
+        dataset_id,
+        revision=revision,
+        split=split,
+        cache_dir=cache_dir,
     )
 
     if limit is not None:
@@ -75,7 +81,9 @@ def load_huggingface_inputs(
         raw=[dict(row) for row in dataset],
         reference=[],
         metadata={
-            "source": "stanforddams/biglocal",
+            "source": dataset_id,
+            "revision": revision,
+            "split": split,
             "limit": limit,
         },
     )

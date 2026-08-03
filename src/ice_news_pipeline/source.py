@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 
@@ -51,10 +51,14 @@ def load_local_inputs(
         metadata={
             "source": "local_jsonl",
             "raw_path": str(raw_path),
-            "reference_path": str(reference_path)
-            if reference_path
+            "reference_path": str(reference_path) if reference_path else None,
+        },
+    )
 
-def load_huggingface_inputs(limit: int | None = None) -> LoadedInputs:
+
+def load_huggingface_inputs(
+    limit: int | None = None,
+) -> LoadedInputs:
     from datasets import load_dataset
 
     dataset = load_dataset(
@@ -69,12 +73,9 @@ def load_huggingface_inputs(limit: int | None = None) -> LoadedInputs:
 
     return LoadedInputs(
         raw=[dict(row) for row in dataset],
-        reference={},
+        reference=[],
         metadata={
             "source": "stanforddams/biglocal",
             "limit": limit,
-        },
-    )
-            else None,
         },
     )

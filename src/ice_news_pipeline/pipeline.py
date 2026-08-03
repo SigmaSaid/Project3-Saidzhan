@@ -216,7 +216,13 @@ def run_pipeline(
     figures: bool = True,
 ) -> PipelineRun:
     raw_rows = [dict(row) for row in loaded.raw]
+
     documents = list(extract_documents(raw_rows, workers=workers))
+
+    print("DOCUMENT STATUSES:")
+    for doc in documents:
+        print(doc.title, doc.parse_status, doc.quality_flags)
+
     _flag_duplicate_source_html(documents)
     
     accepted = [doc for doc in documents if doc.parse_status.value == "accepted"]

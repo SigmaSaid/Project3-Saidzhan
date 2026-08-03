@@ -1,7 +1,28 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, Dict, List, Optional
+
+
+class ParseStatus(str, Enum):
+    SUCCESS = "success"
+    PARTIAL = "partial"
+    FAILED = "failed"
+
+
+@dataclass
+class EventCandidate:
+    text: str = ""
+    event_type: Optional[str] = None
+    confidence: float = 0.0
+
+
+@dataclass
+class PersonCandidate:
+    name: str = ""
+    role: Optional[str] = None
+    confidence: float = 0.0
 
 
 @dataclass
@@ -40,5 +61,6 @@ class ICEDocument:
             "blurb_list": self.blurb_list,
             "updated_date": self.updated_date,
         }
+
 
 DocumentRecord = ICEDocument

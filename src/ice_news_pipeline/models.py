@@ -50,6 +50,15 @@ class EventCandidate:
     extraction_method: str = ""
     confidence: float = 0.0
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            key: (
+                value.value
+                if isinstance(value, Enum)
+                else value
+            )
+            for key, value in self.__dict__.items()
+        }
 
 @dataclass
 class ICEDocument:

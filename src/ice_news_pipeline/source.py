@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import os
+import json
 from pathlib import Path
-from typing import Dict, List, Union
-from dataclasses import dataclass, field
 from dataclasses import dataclass
 from typing import Any
 
@@ -15,35 +13,46 @@ class LoadedInputs:
     metadata: dict[str, Any]
 
 
-def load_local_inputs(input_path: Union[str, Path]) -> List[Dict[str, str]]:
-    """Loads local HTML files or raw text documents from a given directory or file path.
+def _read_jsonl(path: str | Path) -> list[dict[str, Any]]:
+    rows = []
 
-    Returns:
-        List of dictionaries containing:
-        - 'url' / 'input_url': File path or identifier
-        - 'html' / 'content': Raw file content string
-    """
-    path = Path(input_path)
-    results: List[Dict[str, str]] = []
+    path = Path(path)
 
     if not path.exists():
-        return results
+        return rows
 
-    if path.is_file():
-        files = [path]
-    else:
-        files = [p for p in path.glob("**/*") if p.suffix.lower() in (".html", ".htm", ".txt", ".json")]
+    with path.open("r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                rows.append(json.loads(line))
 
-    for file_path in files:
-        try:
-            content = file_path.read_text(encoding="utf-8", errors="ignore")
-            results.append({
-                "url": str(file_path),
-                "input_url": str(file_path),
-                "html": content,
-                "content": content,
-            })
-        except Exception:
-            continue
+    return rows
 
-    return results
+
+def load_local_inputs(
+    raw_path: str | Path,
+    reference_path: str | Path | None = None,
+    limit: int | None = None,
+) -> LoadedInputs:
+    raw = _read_jsonl(raw_path)
+
+    reference = []
+    if reference_path:
+        reference = _read_jsonl(reference_path)
+
+    if limit is not None:
+        raw = raw[:limit]
+        reference = reference[:limit]
+
+    return LoadedInputs(
+        raw=raw,
+        reference=reference,
+        metadata={
+            "source": "local",
+            "raw_path": str(raw_path),
+            "reference_path": str(reference_path)
+            if reference_path
+            else None,
+        },
+    )

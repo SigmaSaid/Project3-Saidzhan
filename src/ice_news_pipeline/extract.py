@@ -31,28 +31,92 @@ from ice_news_pipeline.utils import (
 def extract_document(
     example: dict[str, Any] | str, html_str: str | None = None
 ) -> DocumentRecord:
-    """Extract structured document record from HTML text or input dict."""
-if isinstance(example, str):
-    input_url = normalize_url(example) or ""
-    raw_html = str(html_str or "")
-else:
-    input_url = normalize_url(
-        example.get("url")
-        or example.get("input_url")
-        or example.get("source_url")
-    ) or ""
+    """Extract structured document record from HTML text or dataset row."""
 
-    raw_html = str(
-        example.get("html")
-        or example.get("content")
-        or example.get("text")
-        or example.get("html_content")
-        or example.get("article_html")
-        or ""
-    )
- 
-    source_sha256 = hashlib.sha256(raw_html.encode("utf-8")).hexdigest()
+    if isinstance(example, str):
+        input_url = normalize_url(example) or ""
+        raw_html = str(html_str or "")
+
+        row = {}
+
+    else:
+        row = example
+
+        input_url = normalize_url(
+            row.get("url")
+            or row.get("input_url")
+            or row.get("source_url")
+            or ""
+        )
+
+        raw_html = str(
+            row.get("html")
+            or row.get("content")
+            or row.get("text")
+            or row.get("html_content")
+            or row.get("article_html")
+            or ""
+        )
+
+    # BigLocal News stores extracted fields, not raw HTML.
+    # Create minimal HTML wrapper so DOM extraction works.
+    if not raw_html:
+
+        title = normalize_text(
+            str(row.get("title") or "")
+        )
+
+        body = normalize_text(
+            str(
+                row.get("full_text")
+                or row.get("body_text")
+                or row.get("text")
+                or ""
+            )
+        )
+
+        subtitle = normalize_text(
+            str(row.get("subtitle") or "")
+        )
+
+        raw_html = f"""
+        <html>
+        <head>
+            <title>{title}</title>
+            <meta property="article:published_time"
+                  content="{row.get('date_normalized', '')}">
+            <meta name="description"
+                  content="{subtitle}">
+        </head>
+
+        <body>
+
+            <div class="nr-title">
+                <h1>{title}</h1>
+            </div>
+
+            <div class="nr-subtitle">
+                {subtitle}
+            </div>
+
+            <div class="nr-meta">
+                {row.get('date_raw', '')}
+            </div>
+
+            <div class="nr-body">
+                {''.join(f'<p>{p}</p>' for p in body.splitlines())}
+            </div>
+
+        </body>
+        </html>
+        """
+
+    source_sha256 = hashlib.sha256(
+        raw_html.encode("utf-8")
+    ).hexdigest()
+
     soup = BeautifulSoup(raw_html, "lxml")
+
     provenance: dict[str, str] = {}
     confidences: dict[str, float] = {}
     flags: list[str] = []

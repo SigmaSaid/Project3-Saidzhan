@@ -308,6 +308,9 @@ def extract_document(
             source_sha256=source_sha256,
             entity_bundle=entity_bundle,
         )
-
-def extract_documents(records):
-    return [extract_document(record) for record in records]
+        
+def extract_documents(records: list[dict[str, Any]]) -> list[DocumentRecord]:
+    return [
+        extract_document(record)
+        for record in records
+    ]

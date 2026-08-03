@@ -1,4 +1,12 @@
-def extract_document(example: dict[str, Any] | str, html_str: str | None = None) -> DocumentRecord:
+import hashlib
+from typing import Any
+from urllib.parse import urlsplit
+from bs4 import BeautifulSoup, Tag
+
+
+def extract_document(
+    example: dict[str, Any] | str, html_str: str | None = None
+) -> DocumentRecord:
     """Extract structured document record from HTML text or input dict."""
     if isinstance(example, str):
         input_url = normalize_url(example) or ""
@@ -14,7 +22,11 @@ def extract_document(example: dict[str, Any] | str, html_str: str | None = None)
     flags: list[str] = []
 
     canonical_node = soup.find("link", rel="canonical")
-    canonical = normalize_url(canonical_node.get("href")) if isinstance(canonical_node, Tag) else None
+    canonical = (
+        normalize_url(canonical_node.get("href"))
+        if isinstance(canonical_node, Tag)
+        else None
+    )
     canonical = _field(
         canonical,
         "canonical_url",
@@ -25,7 +37,11 @@ def extract_document(example: dict[str, Any] | str, html_str: str | None = None)
     )
 
     title_node = soup.select_one(".nr-title h1")
-    title = normalize_text(title_node.get_text(" ", strip=True)) if isinstance(title_node, Tag) else None
+    title = (
+        normalize_text(title_node.get_text(" ", strip=True))
+        if isinstance(title_node, Tag)
+        else None
+    )
     title_method = "css:.nr-title h1"
     title_confidence = 1.0
     if title is None:
@@ -46,7 +62,9 @@ def extract_document(example: dict[str, Any] | str, html_str: str | None = None)
         if title:
             flags.append("title_fallback")
     if title is None and soup.title:
-        title = normalize_text(_TITLE_SUFFIX_RE.sub("", soup.title.get_text(" ", strip=True)))
+        title = normalize_text(
+            _TITLE_SUFFIX_RE.sub("", soup.title.get_text(" ", strip=True))
+        )
         title_method = "html:title"
         title_confidence = 0.5
         if title:
@@ -128,7 +146,9 @@ def extract_document(example: dict[str, Any] | str, html_str: str | None = None)
 
     data_layer = _decode_data_layer(soup)
     taxonomy = data_layer.get("entityTaxonomy", {})
-    topic_mapping = taxonomy.get("news_release_topics", {}) if isinstance(taxonomy, dict) else {}
+    topic_mapping = (
+        taxonomy.get("news_release_topics", {}) if isinstance(taxonomy, dict) else {}
+    )
     topics = (
         [str(topic) for topic in topic_mapping.values()]
         if isinstance(topic_mapping, dict)
@@ -187,7 +207,10 @@ def extract_document(example: dict[str, Any] | str, html_str: str | None = None)
         flags.append("unexpected_url_path")
     if canonical and input_url and canonical != input_url:
         flags.append("canonical_url_mismatch")
-    if input_url and urlsplit(input_url).netloc.casefold() not in {"ice.gov", "www.ice.gov"}:
+    if (
+        input_url
+        and urlsplit(input_url).netloc.casefold() not in {"ice.gov", "www.ice.gov"}
+    ):
         flags.append("unexpected_source_domain")
 
     quarantine_reasons = {
@@ -243,8 +266,7 @@ def extract_document(example: dict[str, Any] | str, html_str: str | None = None)
 
     try:
         return DocumentRecord(**data_dict)
-    except Exception:
-        # Fallback if DocumentRecord / ICEDocument has strict positional args or distinct kwargs
+    except TypeError:
         return DocumentRecord(
             url=input_url,
             canonical_url=canonical,
@@ -259,6 +281,12 @@ def extract_document(example: dict[str, Any] | str, html_str: str | None = None)
             word_count=len(tokens(body_text or "")),
             image_urls=image_urls,
             document_type=entity_bundle or "news_release",
+            parse_status=status,
             is_quarantined=quarantined,
             quarantine_reason=", ".join(sorted(set(flags))) if quarantined else None,
+            quality_flags=sorted(set(flags)),
+            field_provenance=provenance,
+            field_confidence=confidences,
+            source_sha256=source_sha256,
+            entity_bundle=entity_bundle,
         )

@@ -1,5 +1,5 @@
 import hashlib
-from typing import Any
+from typing import Any, Dict, List, Optional
 from urllib.parse import urlsplit
 from bs4 import BeautifulSoup, Tag
 

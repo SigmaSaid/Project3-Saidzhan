@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urlsplit
 from bs4 import BeautifulSoup, Tag
 
-from ice_news_pipeline.schema import DocumentRecord, ParseStatus
+from ice_news_pipeline.models import DocumentRecord, ParseStatus
 from ice_news_pipeline.utils import (
     BODY_SELECTOR,
     _TITLE_SUFFIX_RE,

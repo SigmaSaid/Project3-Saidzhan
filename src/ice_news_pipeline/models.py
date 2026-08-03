@@ -26,12 +26,15 @@ class EventCandidate:
     document_id: str
     action_type: str
     legal_stage: str
+
     count_min: int | None = None
     count_max: int | None = None
     count_qualifier: str | None = None
+
     evidence_text: str = ""
     evidence_start: int = 0
     evidence_end: int = 0
+
     extraction_method: str = ""
     confidence: float = 0.0
 
@@ -40,15 +43,21 @@ class EventCandidate:
 class PersonCandidate:
     mention_id: str
     document_id: str
+
     name_raw: str
+
     age: Optional[int] = None
+
     residence_raw: Optional[str] = None
     origin_country_raw: Optional[str] = None
+
     evidence_text: str = ""
     evidence_start: int = 0
     evidence_end: int = 0
+
     extraction_method: str = ""
     confidence: float = 0.0
+
 
 
 @dataclass
@@ -72,6 +81,7 @@ class ICEDocument:
     dateline_raw: Optional[str] = None
     dateline_city: Optional[str] = None
     dateline_region: Optional[str] = None
+    dateline_region_code: Optional[str] = None
     dateline_country: Optional[str] = None
 
     location_full_text: Optional[str] = None
@@ -85,8 +95,8 @@ class ICEDocument:
     paragraphs: List[str] = field(default_factory=list)
     tables: List[Dict[str, Any]] = field(default_factory=list)
 
-    word_count: int = 0
     paragraph_count: int = 0
+    word_count: int = 0
 
     image_urls: List[str] = field(default_factory=list)
 
@@ -112,26 +122,30 @@ class ICEDocument:
     field_confidence: Dict[str, float] = field(default_factory=dict)
 
 
-    def to_dict(self):
-        return {
-            key: (
-                value.value 
-                if isinstance(value, Enum)
-                else value
-            )
-            for key, value in self.__dict__.items()
-        }
+    def to_dict(self) -> Dict[str, Any]:
+        result = {}
+
+        for key, value in self.__dict__.items():
+            if isinstance(value, Enum):
+                result[key] = value.value
+            else:
+                result[key] = value
+
+        return result
 
 
 
 @dataclass
 class FieldMetric:
     field: str = ""
+
     reference_present: int = 0
     extracted_present: int = 0
     both_present: int = 0
+
     exact_matches: int = 0
     false_positives: int = 0
+
     coverage: float = 0.0
     agreement: float = 0.0
 
@@ -140,6 +154,7 @@ class FieldMetric:
 @dataclass
 class ValidationGate:
     name: str = ""
+
     status: GateStatus = GateStatus.SKIPPED
 
     observed: str = ""
@@ -150,9 +165,11 @@ class ValidationGate:
 
 @dataclass
 class ValidationResult:
+
     gates: List[ValidationGate] = field(default_factory=list)
 
     field_metrics: List[FieldMetric] = field(default_factory=list)
+
 
     reference_profile: Dict[str, Any] = field(default_factory=dict)
 
@@ -160,17 +177,20 @@ class ValidationResult:
 
     body_similarity: Dict[str, Any] = field(default_factory=dict)
 
+
     row_accounting: Dict[str, Any] = field(default_factory=dict)
 
     issues: List[Dict[str, Any]] = field(default_factory=list)
 
 
+
     @property
-    def passed(self):
+    def passed(self) -> bool:
         return all(
             gate.status != GateStatus.FAIL
             for gate in self.gates
         )
+
 
 
 DocumentRecord = ICEDocument

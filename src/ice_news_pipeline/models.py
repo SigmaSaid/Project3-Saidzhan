@@ -13,6 +13,13 @@ class ParseStatus(str, Enum):
     QUARANTINED = "QUARANTINED"
 
 
+class GateStatus(str, Enum):
+    PASSED = "PASSED"
+    FAILED = "FAILED"
+    SKIPPED = "SKIPPED"
+    WARNING = "WARNING"
+
+
 @dataclass
 class EventCandidate:
     text: str = ""
@@ -61,7 +68,6 @@ class ICEDocument:
     is_quarantined: bool = False
     quarantine_reason: Optional[str] = None
 
-    # Поля для расширенной валидации и аудита
     document_id: Optional[str] = None
     input_url: Optional[str] = None
     description: Optional[str] = None

@@ -309,8 +309,8 @@ def extract_document(
             entity_bundle=entity_bundle,
         )
         
-def extract_documents(records: list[dict[str, Any]]) -> list[DocumentRecord]:
+def extract_documents(records, workers=1):
     return [
-        extract_document(record)
-        for record in records
+        extract_document(row)
+        for row in records
     ]

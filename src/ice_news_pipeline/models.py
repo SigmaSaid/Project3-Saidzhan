@@ -54,20 +54,18 @@ class EventCandidate:
 @dataclass
 class ICEDocument:
 
-    # identity
     document_id: Optional[str] = None
+
     url: str = ""
     input_url: Optional[str] = None
     canonical_url: Optional[str] = None
     source_sha256: Optional[str] = None
 
-    # metadata
     title: str = ""
     subtitle: Optional[str] = None
     description: Optional[str] = None
     topics: List[str] = field(default_factory=list)
 
-    # dates
     date_raw: Optional[str] = None
     date_normalized: Optional[str] = None
     date_last_updated: Optional[str] = None
@@ -75,7 +73,6 @@ class ICEDocument:
     modified_date: Optional[str] = None
     updated_date: Optional[str] = None
 
-    # location
     dateline: Optional[str] = None
     dateline_raw: Optional[str] = None
     dateline_city: Optional[str] = None
@@ -87,20 +84,19 @@ class ICEDocument:
     state: Optional[str] = None
     location_full_text: Optional[str] = None
 
-    # content
     full_text: str = ""
     body_text: str = ""
+
     paragraphs: List[str] = field(default_factory=list)
     tables: List[Dict[str, Any]] = field(default_factory=list)
 
     word_count: int = 0
     paragraph_count: int = 0
 
-    # media
     image_urls: List[str] = field(default_factory=list)
 
-    # parsing
     scraped_at: Optional[str] = None
+
     document_type: str = "news_release"
 
     parse_status: Optional[ParseStatus] = None
@@ -108,8 +104,8 @@ class ICEDocument:
     is_quarantined: bool = False
     quarantine_reason: Optional[str] = None
 
-    # audit
     entity_bundle: Optional[str] = None
+
     quality_flags: List[str] = field(default_factory=list)
 
     field_provenance: Dict[str, str] = field(default_factory=dict)
@@ -129,6 +125,7 @@ class ICEDocument:
         }
 
 
+
 @dataclass
 class FieldMetric:
     field: str = ""
@@ -141,34 +138,36 @@ class FieldMetric:
     agreement: float = 0.0
 
 
+
+@dataclass
+class ValidationGate:
+    name: str = ""
+    status: GateStatus = GateStatus.SKIPPED
+    observed: str = ""
+    requirement: str = ""
+    detail: str = ""
+
+
+
 @dataclass
 class ValidationResult:
+
     status: GateStatus = GateStatus.SKIPPED
 
     gates: List[ValidationGate] = field(default_factory=list)
+
     field_metrics: List[FieldMetric] = field(default_factory=list)
 
     reference_profile: Dict[str, Any] = field(default_factory=dict)
+
     document_profile: Dict[str, Any] = field(default_factory=dict)
+
     body_similarity: Dict[str, Any] = field(default_factory=dict)
 
     row_accounting: Dict[str, Any] = field(default_factory=dict)
 
     issues: List[Dict[str, Any]] = field(default_factory=list)
 
-
-@dataclass
-class ValidationResult:
-    gates: List[ValidationGate] = field(default_factory=list)
-    field_metrics: List[FieldMetric] = field(default_factory=list)
-
-    reference_profile: Dict[str, Any] = field(default_factory=dict)
-    document_profile: Dict[str, Any] = field(default_factory=dict)
-    body_similarity: Dict[str, Any] = field(default_factory=dict)
-
-    row_accounting: Dict[str, Any] = field(default_factory=dict)
-
-    issues: List[Dict[str, Any]] = field(default_factory=list)
 
     @property
     def passed(self) -> bool:
@@ -176,6 +175,7 @@ class ValidationResult:
             gate.status != GateStatus.FAIL
             for gate in self.gates
         )
+
 
 
 DocumentRecord = ICEDocument

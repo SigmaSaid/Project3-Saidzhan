@@ -6,13 +6,18 @@ import re
 from collections.abc import Iterable, Iterator
 from concurrent.futures import ThreadPoolExecutor
 from json import JSONDecodeError
-from typing import Any
+from typing import Any, Dict, List, Optional, Tuple, Union
 from urllib.parse import urljoin, urlsplit
 
 from bs4 import BeautifulSoup
 from bs4.element import Comment, NavigableString, Tag
 
-from ice_news_pipeline.constants import US_REGION_CODES
+from ice_news_pipeline.constants import (
+    BODY_SELECTOR,
+    FALLBACK_BODY_SELECTOR,
+    TITLE_SELECTOR,
+    US_REGION_CODES,
+)
 from ice_news_pipeline.models import DocumentRecord, ICEDocument, ParseStatus
 from ice_news_pipeline.normalize import iso_date, normalize_text, normalize_url, tokens
 
@@ -20,6 +25,11 @@ _DATELINE_RE = re.compile(r"^(?P<dateline>.{2,80}?)(?:\s*[—–]\s*|\s*-\s+)")
 _TITLE_SUFFIX_RE = re.compile(r"\s*[|–—-]\s*ICE\s*$", re.IGNORECASE)
 _TWO_LETTER_RE = re.compile(r"^[A-Z]{2}$")
 _DATA_LAYER_CALL = "window.dataLayer.push("
+
+
+def compute_sha256(text: str) -> str:
+    """Computes the SHA256 hash for an input string."""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def _meta_content(soup: BeautifulSoup, key: str, value: str) -> str | None:
@@ -66,6 +76,20 @@ def _decode_data_layer(soup: BeautifulSoup) -> dict[str, Any]:
     return {}
 
 
+def extract_datalayer(soup: BeautifulSoup) -> Dict[str, Any]:
+    """Extract embedded JavaScript dataLayer JSON objects if present on the page."""
+    for script in soup.find_all("script"):
+        if script.string and "dataLayer" in script.string:
+            try:
+                match = re.search(r'dataLayer\s*=\s*(\[.*?\]);', script.string, re.DOTALL)
+                if match:
+                    data = json.loads(match.group(1))
+                    return data[0] if isinstance(data, list) and data else {}
+            except Exception:
+                continue
+    return _decode_data_layer(soup)
+
+
 def _extract_topic_fallback(meta_node: Tag | None) -> str | None:
     if meta_node is None:
         return None
@@ -79,6 +103,66 @@ def _extract_topic_fallback(meta_node: Tag | None) -> str | None:
         elif isinstance(sibling, Tag):
             fragments.append(sibling.get_text(" ", strip=True))
     return normalize_text(" ".join(fragments))
+
+
+def extract_title(soup: BeautifulSoup, datalayer: Dict[str, Any] = None) -> str:
+    """Extract page title following the extraction hierarchy."""
+    nr_title = soup.select_one(TITLE_SELECTOR)
+    if isinstance(nr_title, Tag) and nr_title.get_text(strip=True):
+        return normalize_text(nr_title.get_text(" ", strip=True)) or ""
+
+    og_title = soup.find("meta", property="og:title")
+    if isinstance(og_title, Tag) and og_title.get("content"):
+        return str(og_title["content"]).strip()
+
+    h1 = soup.find("h1")
+    if isinstance(h1, Tag) and h1.get_text(strip=True):
+        return normalize_text(h1.get_text(" ", strip=True)) or ""
+
+    if soup.title and soup.title.string:
+        return normalize_text(_TITLE_SUFFIX_RE.sub("", soup.title.get_text(" ", strip=True))) or ""
+
+    return ""
+
+
+def extract_topics(soup: BeautifulSoup, datalayer: Dict[str, Any] = None) -> List[str]:
+    """Extract topics from dataLayer entityTaxonomy or fallback meta tags."""
+    if datalayer is None:
+        datalayer = extract_datalayer(soup)
+
+    topics: List[str] = []
+    if "entityTaxonomy" in datalayer and "news_release_topics" in datalayer["entityTaxonomy"]:
+        raw_topics = datalayer["entityTaxonomy"]["news_release_topics"]
+        if isinstance(raw_topics, dict):
+            topics = [str(t) for t in raw_topics.values()]
+        elif isinstance(raw_topics, list):
+            topics = [str(t) for t in raw_topics]
+
+    if not topics:
+        fallback_topic = _extract_topic_fallback(soup.select_one(".nr-meta"))
+        if fallback_topic:
+            topics = [fallback_topic]
+
+    if not topics:
+        meta_node = soup.select_one(".nr-meta")
+        if meta_node:
+            text = meta_node.get_text(strip=True)
+            if "Topics:" in text:
+                topic_str = text.split("Topics:")[-1].strip()
+                topics = [t.strip() for t in topic_str.split(",") if t.strip()]
+
+    return topics
+
+
+def extract_dates(soup: BeautifulSoup) -> Tuple[Optional[str], Optional[str]]:
+    """Extract published and modified dates from article meta tags."""
+    pub_meta = soup.find("meta", property="article:published_time")
+    pub_date = str(pub_meta["content"]).strip() if isinstance(pub_meta, Tag) and pub_meta.get("content") else None
+
+    mod_meta = soup.find("meta", property="article:modified_time")
+    mod_date = str(mod_meta["content"]).strip() if isinstance(mod_meta, Tag) and mod_meta.get("content") else None
+
+    return pub_date, mod_date
 
 
 def _semantic_segments(root: Tag) -> list[str]:
@@ -122,7 +206,7 @@ def _semantic_segments(root: Tag) -> list[str]:
 
 def _extract_body(soup: BeautifulSoup) -> tuple[str | None, list[str], str | None, float]:
     strategies = (
-        (".nr-body", "css:.nr-body", 1.0),
+        (BODY_SELECTOR, f"css:{BODY_SELECTOR}", 1.0),
         ("[itemprop='articleBody']", "css:[itemprop=articleBody]", 0.75),
         ("article .field--name-body", "css:article .field--name-body", 0.60),
     )
@@ -138,6 +222,20 @@ def _extract_body(soup: BeautifulSoup) -> tuple[str | None, list[str], str | Non
         if body:
             return body, paragraphs, method, confidence
     return None, [], None, 0.0
+
+
+def extract_paragraphs(body_node: Tag | BeautifulSoup) -> List[str]:
+    """Extract cleaned paragraph strings from body element."""
+    if isinstance(body_node, Tag):
+        paragraphs = _semantic_segments(body_node)
+        if paragraphs:
+            return paragraphs
+    paragraphs = []
+    for p in body_node.find_all("p"):
+        txt = re.sub(r"\s+", " ", p.get_text(strip=True)).strip()
+        if txt:
+            paragraphs.append(txt)
+    return paragraphs
 
 
 def _header_metadata(
@@ -188,9 +286,35 @@ def _extract_dateline(paragraphs: list[str]) -> str | None:
     return candidate if letters and letters == letters.upper() else None
 
 
-def _extract_tables(soup: BeautifulSoup) -> list[dict[str, Any]]:
+def extract_dateline(body_node: BeautifulSoup | Tag | list[str]) -> Optional[str]:
+    """Extract dateline string from body or paragraph list."""
+    if isinstance(body_node, list):
+        return _extract_dateline(body_node)
+    first_p = body_node.find("p")
+    if first_p:
+        match = re.match(r"^([A-Z\s.,\–\-]+)\s*[\–\-—]\s*", first_p.get_text(strip=True))
+        if match:
+            return match.group(1).strip()
+    return None
+
+
+def extract_body_and_dateline(soup: BeautifulSoup) -> Tuple[str, Optional[str]]:
+    """Targeted body text extraction from .nr-body."""
+    body_text, paragraphs, _, _ = _extract_body(soup)
+    if body_text is None:
+        body_node = soup.select_one(BODY_SELECTOR) or soup.select_one(FALLBACK_BODY_SELECTOR) or soup.body or soup
+        body_text = normalize_text(body_node.get_text(" ", strip=True)) or ""
+        paragraphs = [body_text] if body_text else []
+
+    dateline = _extract_dateline(paragraphs) or extract_dateline(soup)
+    return body_text, dateline
+
+
+def extract_tables(soup: BeautifulSoup | Tag) -> list[dict[str, Any]]:
+    """Extract table structures from document."""
     tables: list[dict[str, Any]] = []
-    for table_index, table in enumerate(soup.select(".nr-body table")):
+    target_tables = soup.select(".nr-body table") if hasattr(soup, "select") else soup.find_all("table")
+    for table_index, table in enumerate(target_tables):
         rows: list[list[str]] = []
         for row in table.select("tr"):
             cells = [
@@ -222,11 +346,12 @@ def _extract_tables(soup: BeautifulSoup) -> list[dict[str, Any]]:
     return tables
 
 
-def _extract_images(soup: BeautifulSoup, base_url: str) -> list[str]:
+def extract_image_urls(soup: BeautifulSoup, base_url: str = "") -> list[str]:
+    """Extract image URLs from document."""
     images: list[str] = []
     seen: set[str] = set()
     nodes = soup.select(
-        ".colorbox-image-grid a.colorbox[href], .nr-image-container img, .nr-body img"
+        ".colorbox-image-grid a.colorbox[href], .nr-image-container img, .nr-body img, .hero-image img"
     )
     for image in nodes:
         attributes = ("href",) if image.name == "a" else ("src", "data-src", "data-original")
@@ -240,7 +365,7 @@ def _extract_images(soup: BeautifulSoup, base_url: str) -> list[str]:
         )
         if not candidate:
             continue
-        absolute = normalize_url(urljoin(base_url, candidate))
+        absolute = normalize_url(urljoin(base_url, candidate)) if base_url else candidate
         if absolute and absolute not in seen:
             seen.add(absolute)
             images.append(absolute)
@@ -248,13 +373,13 @@ def _extract_images(soup: BeautifulSoup, base_url: str) -> list[str]:
 
 
 def extract_document(example: dict[str, Any] | str, html_str: str | None = None) -> DocumentRecord:
-    """Извлекает документ как из словаря-обертки, так и при прямом передаче URL и HTML-строки."""
+    """Extract structured document record from HTML text or input dict."""
     if isinstance(example, str):
         input_url = normalize_url(example) or ""
         raw_html = str(html_str or "")
     else:
-        input_url = normalize_url(example.get("url")) or ""
-        raw_html = str(example.get("html") or "")
+        input_url = normalize_url(example.get("url") or example.get("input_url")) or ""
+        raw_html = str(example.get("html") or example.get("content") or "")
 
     source_sha256 = hashlib.sha256(raw_html.encode("utf-8")).hexdigest()
     soup = BeautifulSoup(raw_html, "lxml")
@@ -398,10 +523,10 @@ def extract_document(example: dict[str, Any] | str, html_str: str | None = None)
     if body_text and body_method:
         provenance["body_text"] = body_method
         confidences["body_text"] = body_confidence
-        if body_method != "css:.nr-body":
+        if body_method != f"css:{BODY_SELECTOR}":
             flags.append("body_fallback")
     dateline_raw = _extract_dateline(paragraphs)
-    tables = _extract_tables(soup)
+    tables = extract_tables(soup)
     _field(
         dateline_raw,
         "dateline_raw",
@@ -410,7 +535,7 @@ def extract_document(example: dict[str, Any] | str, html_str: str | None = None)
         provenance,
         confidences,
     )
-    image_urls = _extract_images(soup, canonical or input_url)
+    image_urls = extract_image_urls(soup, canonical or input_url)
     if image_urls:
         provenance["image_urls"] = "css:.nr-image-container img,.nr-body img"
         confidences["image_urls"] = 1.0
@@ -432,11 +557,11 @@ def extract_document(example: dict[str, Any] | str, html_str: str | None = None)
         flags.append("missing_topics")
     if entity_bundle and entity_bundle != "news_release":
         flags.append(f"unexpected_entity_bundle:{entity_bundle}")
-    if "/news/releases/" not in urlsplit(input_url).path:
+    if input_url and "/news/releases/" not in urlsplit(input_url).path:
         flags.append("unexpected_url_path")
     if canonical and input_url and canonical != input_url:
         flags.append("canonical_url_mismatch")
-    if urlsplit(input_url).netloc.casefold() not in {"ice.gov", "www.ice.gov"}:
+    if input_url and urlsplit(input_url).netloc.casefold() not in {"ice.gov", "www.ice.gov"}:
         flags.append("unexpected_source_domain")
 
     quarantine_reasons = {
@@ -454,7 +579,6 @@ def extract_document(example: dict[str, Any] | str, html_str: str | None = None)
     status = ParseStatus.QUARANTINED if quarantined else ParseStatus.ACCEPTED
     identity_url = canonical or input_url
 
-    # Безопасное инстанцирование модели в зависимости от определенной структуры
     doc_kwargs = {
         "url": input_url,
         "canonical_url": canonical,
@@ -477,7 +601,6 @@ def extract_document(example: dict[str, Any] | str, html_str: str | None = None)
     try:
         return DocumentRecord(**doc_kwargs)
     except TypeError:
-        # Резервный вызов для кастомной сигнатуры DocumentRecord
         return DocumentRecord(
             document_id=hashlib.sha256(identity_url.encode("utf-8")).hexdigest()[:20],
             input_url=input_url,

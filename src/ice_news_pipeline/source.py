@@ -53,6 +53,28 @@ def load_local_inputs(
             "raw_path": str(raw_path),
             "reference_path": str(reference_path)
             if reference_path
+
+def load_huggingface_inputs(limit: int | None = None) -> LoadedInputs:
+    from datasets import load_dataset
+
+    dataset = load_dataset(
+        "stanforddams/biglocal",
+        split="train",
+    )
+
+    if limit is not None:
+        dataset = dataset.select(
+            range(min(limit, len(dataset)))
+        )
+
+    return LoadedInputs(
+        raw=[dict(row) for row in dataset],
+        reference={},
+        metadata={
+            "source": "stanforddams/biglocal",
+            "limit": limit,
+        },
+    )
             else None,
         },
     )

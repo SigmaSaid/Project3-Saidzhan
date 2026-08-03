@@ -40,3 +40,5 @@ class ICEDocument:
             "blurb_list": self.blurb_list,
             "updated_date": self.updated_date,
         }
+
+DocumentRecord = ICEDocument

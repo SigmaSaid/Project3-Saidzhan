@@ -88,3 +88,8 @@ REQUIRED_REFERENCE_FIELDS = (
     "blurb_list",
     "updated_date",
 )
+
+# HTML Selectors
+TITLE_SELECTOR = "h1"
+BODY_SELECTOR = "div.field--name-body"
+FALLBACK_BODY_SELECTOR = "article"

@@ -213,3 +213,5 @@ class ValidationResult:
             "row_accounting": self.row_accounting,
             "issues": self.issues,
         }
+        
+DocumentRecord = ICEDocument

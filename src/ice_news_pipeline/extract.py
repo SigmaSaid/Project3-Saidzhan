@@ -5,7 +5,12 @@ from bs4 import BeautifulSoup, Tag
 
  
 from ice_news_pipeline.models import DocumentRecord, ParseStatus
-from ice_news_pipeline.normalize import iso_date
+from ice_news_pipeline.normalize import (
+    iso_date,
+    normalize_url,
+    normalize_text,
+    tokens,
+)
 from ice_news_pipeline.utils import (
     BODY_SELECTOR,
     _TITLE_SUFFIX_RE,

@@ -168,7 +168,35 @@ class ValidationResult:
 
     issues: List[Dict[str, Any]] = field(default_factory=list)
 
+        def to_dict(self) -> Dict[str, Any]:
+        return {
+            "status": self.status.value
+            if isinstance(self.status, Enum)
+            else self.status,
 
+            "gates": [
+                {
+                    "name": gate.name,
+                    "status": gate.status.value,
+                    "observed": gate.observed,
+                    "requirement": gate.requirement,
+                    "detail": gate.detail,
+                }
+                for gate in self.gates
+            ],
+
+            "field_metrics": [
+                metric.__dict__
+                for metric in self.field_metrics
+            ],
+
+            "reference_profile": self.reference_profile,
+            "document_profile": self.document_profile,
+            "body_similarity": self.body_similarity,
+            "row_accounting": self.row_accounting,
+            "issues": self.issues,
+        }
+            
     @property
     def passed(self) -> bool:
         return all(

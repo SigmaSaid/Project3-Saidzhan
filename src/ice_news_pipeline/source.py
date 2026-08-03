@@ -47,7 +47,6 @@ def extract_title(soup: BeautifulSoup, datalayer: Dict[str, Any]) -> str:
 def extract_topics(soup: BeautifulSoup, datalayer: Dict[str, Any]) -> List[str]:
     """Extract topics from dataLayer entityTaxonomy or fallback meta tags."""
     topics: List[str] = []
-    
 
     if "entityTaxonomy" in datalayer and "news_release_topics" in datalayer["entityTaxonomy"]:
         raw_topics = datalayer["entityTaxonomy"]["news_release_topics"]
@@ -56,7 +55,6 @@ def extract_topics(soup: BeautifulSoup, datalayer: Dict[str, Any]) -> List[str]:
         elif isinstance(raw_topics, list):
             topics = [str(t) for t in raw_topics]
 
- 
     if not topics:
         meta_node = soup.select_one(".nr-meta")
         if meta_node:
@@ -82,15 +80,12 @@ def extract_dates(soup: BeautifulSoup) -> tuple[Optional[str], Optional[str]]:
 def extract_body_and_dateline(soup: BeautifulSoup) -> tuple[str, Optional[str]]:
     """Targeted body text extraction from .nr-body (excluding nav/footers/scripts)."""
     body_node = soup.select_one(BODY_SELECTOR) or soup.select_one(FALLBACK_BODY_SELECTOR)
-    
+
     if not body_node:
-
         body_node = soup.body if soup.body else soup
-
 
     for elem in body_node(["script", "style", "nav", "footer", "header", "noscript"]):
         elem.decompose()
-
 
     dateline = None
     first_p = body_node.find("p")
@@ -115,6 +110,7 @@ def extract_image_urls(soup: BeautifulSoup) -> List[str]:
             images.append(str(src))
     return list(set(images))
 
+
 def parse_ice_html(raw_url: str, html_content: str) -> ICEDocument:
     """Main parsing pipeline function converting raw HTML into a structured ICEDocument."""
     soup = BeautifulSoup(html_content, "lxml")
@@ -138,10 +134,12 @@ def parse_ice_html(raw_url: str, html_content: str) -> ICEDocument:
         url=raw_url,
         canonical_url=canonical_url,
         title=title,
+        date_raw=published_date,
         published_date=published_date,
         modified_date=modified_date,
         topics=topics,
         dateline=dateline,
+        full_text=body_text,
         body_text=body_text,
         word_count=word_count,
         image_urls=image_urls,
@@ -149,3 +147,7 @@ def parse_ice_html(raw_url: str, html_content: str) -> ICEDocument:
         is_quarantined=False,
         quarantine_reason=None
     )
+
+
+# Алиас функции для тестов
+extract_document = parse_ice_html

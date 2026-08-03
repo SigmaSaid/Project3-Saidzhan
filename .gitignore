@@ -1,12 +1,9 @@
-# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
 *.so
 
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -26,7 +23,6 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# Pytest / Coverage / Tooling
 .pytest_cache/
 .coverage
 .coverage.*
@@ -38,14 +34,12 @@ coverage.xml
 *.py,cover
 .hypothesis/
 
-# Virtual Environment
 venv/
 env/
 ENV/
 env.bak/
 venv.bak/
 
-# IDE & Editors
 .vscode/
 .idea/
 *.swp
@@ -53,5 +47,4 @@ venv.bak/
 *~
 .DS_Store
 
-# Logs
 *.log

@@ -210,7 +210,7 @@ def extract_document(
         confidences["entity_bundle"] = 1.0
 
     print("DEBUG ENTITY:", entity_bundle)
-    
+
     if not title:
         flags.append("missing_title")
     if not published_date:
@@ -223,37 +223,44 @@ def extract_document(
         flags.append("missing_topics")
     if entity_bundle and entity_bundle != "news_release":
         flags.append(f"unexpected_entity_bundle:{entity_bundle}")
+
     if input_url and "/news/releases/" not in urlsplit(input_url).path:
         flags.append("unexpected_url_path")
+
     if canonical and input_url and canonical != input_url:
         flags.append("canonical_url_mismatch")
+
     if (
-    input_url
-    and urlsplit(input_url).netloc.casefold() not in {"ice.gov", "www.ice.gov"}
-):
-    flags.append("unexpected_source_domain")
+        input_url
+        and urlsplit(input_url).netloc.casefold()
+        not in {"ice.gov", "www.ice.gov"}
+    ):
+        flags.append("unexpected_source_domain")
 
 
-print("DEBUG URL:", input_url)
-print("DEBUG TITLE:", title)
-print("DEBUG DATE:", published_date)
-print("DEBUG BODY LENGTH:", len(body_text or ""))
-print("DEBUG TOPICS:", topics)
-print("DEBUG FLAGS:", flags)
+    print("DEBUG URL:", input_url)
+    print("DEBUG TITLE:", title)
+    print("DEBUG DATE:", published_date)
+    print("DEBUG BODY LENGTH:", len(body_text or ""))
+    print("DEBUG TOPICS:", topics)
+    print("DEBUG FLAGS:", flags)
 
 
-quarantine_reasons = {
-    "missing_title",
-    "missing_published_date",
-    "missing_body",
-    "short_body",
-    "unexpected_url_path",
-    "canonical_url_mismatch",
-    "unexpected_source_domain",
-}
+    quarantine_reasons = {
+        "missing_title",
+        "missing_published_date",
+        "missing_body",
+        "short_body",
+        "unexpected_url_path",
+        "canonical_url_mismatch",
+        "unexpected_source_domain",
+    }
+
     quarantined = bool(quarantine_reasons.intersection(flags)) or any(
-        flag.startswith("unexpected_entity_bundle:") for flag in flags
+        flag.startswith("unexpected_entity_bundle:")
+        for flag in flags
     )
+
     status = ParseStatus.QUARANTINED if quarantined else ParseStatus.ACCEPTED
     identity_url = canonical or input_url
 

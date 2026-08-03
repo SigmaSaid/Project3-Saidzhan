@@ -9,6 +9,8 @@ class ParseStatus(str, Enum):
     SUCCESS = "success"
     PARTIAL = "partial"
     FAILED = "failed"
+    ACCEPTED = "ACCEPTED"
+    QUARANTINED = "QUARANTINED"
 
 
 @dataclass
@@ -16,6 +18,10 @@ class EventCandidate:
     text: str = ""
     event_type: Optional[str] = None
     confidence: float = 0.0
+    description: Optional[str] = None
+    date: Optional[str] = None
+    location: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -23,6 +29,9 @@ class PersonCandidate:
     name: str = ""
     role: Optional[str] = None
     confidence: float = 0.0
+    age: Optional[int] = None
+    nationality: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -51,6 +60,25 @@ class ICEDocument:
     document_type: str = "news_release"
     is_quarantined: bool = False
     quarantine_reason: Optional[str] = None
+    
+    # Дополнительные поля для совместимости с глубоким аудитом и валидацией
+    document_id: Optional[str] = None
+    input_url: Optional[str] = None
+    description: Optional[str] = None
+    dateline_raw: Optional[str] = None
+    dateline_city: Optional[str] = None
+    dateline_region: Optional[str] = None
+    dateline_region_code: Optional[str] = None
+    dateline_country: Optional[str] = None
+    paragraphs: List[str] = field(default_factory=list)
+    tables: List[Dict[str, Any]] = field(default_factory=list)
+    paragraph_count: int = 0
+    source_sha256: Optional[str] = None
+    entity_bundle: Optional[str] = None
+    parse_status: Optional[ParseStatus] = None
+    quality_flags: List[str] = field(default_factory=list)
+    field_provenance: Dict[str, str] = field(default_factory=dict)
+    field_confidence: Dict[str, float] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -78,6 +106,23 @@ class ICEDocument:
             "document_type": self.document_type,
             "is_quarantined": self.is_quarantined,
             "quarantine_reason": self.quarantine_reason,
+            "document_id": self.document_id,
+            "input_url": self.input_url,
+            "description": self.description,
+            "dateline_raw": self.dateline_raw,
+            "dateline_city": self.dateline_city,
+            "dateline_region": self.dateline_region,
+            "dateline_region_code": self.dateline_region_code,
+            "dateline_country": self.dateline_country,
+            "paragraphs": self.paragraphs,
+            "tables": self.tables,
+            "paragraph_count": self.paragraph_count,
+            "source_sha256": self.source_sha256,
+            "entity_bundle": self.entity_bundle,
+            "parse_status": self.parse_status.value if isinstance(self.parse_status, Enum) else self.parse_status,
+            "quality_flags": self.quality_flags,
+            "field_provenance": self.field_provenance,
+            "field_confidence": self.field_confidence,
         }
 
 

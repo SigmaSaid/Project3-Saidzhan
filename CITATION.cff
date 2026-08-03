@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this pipeline or data validation framework, please cite this repository and the Big Local News dataset."
+title: "ICE Press Release Extraction and Validation Pipeline"
+type: software
+authors:
+  - given-names: Saidzhan
+  - given-names: Afshinkhan
+version: 1.0.0
+date-released: 2026-07-29
+license: MIT
+repository-code: "https://github.com/SigmaSaid/Project3"
+references:
+  - type: data
+    title: "Big Local News: ICE press releases"
+    authors:
+      - name: "Big Local News, Stanford University"
+    publisher:
+      name: "Big Local News, Stanford University"
+    url: "https://huggingface.co/datasets/stanforddams/biglocal"

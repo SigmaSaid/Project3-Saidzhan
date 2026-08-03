@@ -4,11 +4,16 @@ import os
 from pathlib import Path
 from typing import Dict, List, Union
 from dataclasses import dataclass, field
+from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
 class LoadedInputs:
-    records: List[Dict[str, str]] = field(default_factory=list)
+    raw: list[dict[str, Any]]
+    reference: list[dict[str, Any]]
+    metadata: dict[str, Any]
+
 
 def load_local_inputs(input_path: Union[str, Path]) -> List[Dict[str, str]]:
     """Loads local HTML files or raw text documents from a given directory or file path.

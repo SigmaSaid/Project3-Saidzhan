@@ -75,28 +75,20 @@ def normalize_url(url: str | None) -> str | None:
 
     url = url.strip()
 
-    if not url.startswith(
-        ("http://", "https://")
-    ):
+    if not re.match(r"^https?://", url, flags=re.IGNORECASE):
         url = "https://" + url
 
     parts = urlsplit(url)
 
-    scheme = parts.scheme.lower()
-    netloc = parts.netloc.lower()
-
-    path = parts.path.rstrip("/")
-
     return urlunsplit(
         (
-            scheme,
-            netloc,
-            path,
+            parts.scheme.lower(),
+            parts.netloc.lower(),
+            parts.path.rstrip("/"),
             "",
-            ""
+            "",
         )
     )
-
 
 def parse_date(value: Any) -> date | None:
     text = normalize_text(value)

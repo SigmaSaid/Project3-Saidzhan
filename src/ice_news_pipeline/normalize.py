@@ -5,6 +5,7 @@ import unicodedata
 from collections import Counter
 from datetime import date, datetime
 from typing import Any, Optional
+from urllib.parse import urlsplit, urlunsplit
 
 from ice_news_pipeline.constants import MISSING_SENTINELS
 from ice_news_pipeline.models import ICEDocument
@@ -52,12 +53,32 @@ def normalize_text(value: Any, *, preserve_lines: bool = False) -> str | None:
 
 
 def normalize_url(value: Any) -> str | None:
-    """Standardizes scheme, domain, path, and query parameters for URL comparison."""
-    text = normalize_text(value)
-    if text is None:
+    if not value:
         return None
+
+    value = str(value).strip()
+
+    if not value.startswith(("http://", "https://")):
+        value = "https://" + value
+
+    parsed = urlsplit(value)
+
+    scheme = parsed.scheme.lower()
+    netloc = parsed.netloc.lower()
+
+    path = parsed.path.rstrip("/")
+
+    return urlunsplit(
+        (
+            scheme,
+            netloc,
+            path,
+            "",
+            ""
+        )
+    )
+
     
-    # Strip protocol prefix for standard comparison
     text_clean = re.sub(r"^https?://", "", text, flags=re.IGNORECASE)
     return text_clean.rstrip("/")
 

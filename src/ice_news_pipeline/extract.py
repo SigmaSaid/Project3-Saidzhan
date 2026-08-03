@@ -2,8 +2,10 @@ import hashlib
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlsplit
 from bs4 import BeautifulSoup, Tag
+
  
 from ice_news_pipeline.models import DocumentRecord, ParseStatus
+from ice_news_pipeline.normalize import iso_date
 from ice_news_pipeline.utils import (
     BODY_SELECTOR,
     _TITLE_SUFFIX_RE,
@@ -16,7 +18,6 @@ from ice_news_pipeline.utils import (
     _meta_content,
     extract_image_urls,
     extract_tables,
-    iso_date,
     normalize_text,
     normalize_url,
     tokens,

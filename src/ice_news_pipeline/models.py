@@ -22,13 +22,18 @@ class GateStatus(str, Enum):
 
 @dataclass
 class EventCandidate:
-    text: str = ""
-    event_type: Optional[str] = None
-    confidence: float = 0.0
-    description: Optional[str] = None
-    date: Optional[str] = None
-    location: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    event_id: str
+    document_id: str
+    action_type: str
+    legal_stage: str
+    count_min: int | None
+    count_max: int | None
+    count_qualifier: str | None
+    evidence_text: str
+    evidence_start: int
+    evidence_end: int
+    extraction_method: str
+    confidence: float
 
 
 @dataclass

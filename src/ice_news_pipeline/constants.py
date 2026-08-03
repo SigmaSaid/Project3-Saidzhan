@@ -1,4 +1,4 @@
-rom __future__ import annotations
+from __future__ import annotations
 
 DATASET_ID = "stanforddams/biglocal"
 DEFAULT_REVISION = "4e9cd487de2b4781bc40b39a92295b0ee6827034"

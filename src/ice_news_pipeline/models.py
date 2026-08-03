@@ -14,10 +14,10 @@ class ParseStatus(str, Enum):
 
 
 class GateStatus(str, Enum):
-    PASS = "PASS"
-    FAIL = "FAIL"
-    WARN = "WARN"
-    SKIPPED = "SKIPPED"
+    PASS = "pass"
+    FAIL = "fail"
+    WARN = "warn"
+    SKIPPED = "skipped"
 
 
 @dataclass

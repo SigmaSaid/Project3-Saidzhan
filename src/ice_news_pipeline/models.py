@@ -36,12 +36,17 @@ class EventCandidate:
 
 @dataclass
 class PersonCandidate:
-    name: str = ""
-    role: Optional[str] = None
-    confidence: float = 0.0
+    mention_id: str
+    document_id: str
+    name_raw: str
     age: Optional[int] = None
-    nationality: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    residence_raw: Optional[str] = None
+    origin_country_raw: Optional[str] = None
+    evidence_text: str = ""
+    evidence_start: int = 0
+    evidence_end: int = 0
+    extraction_method: str = ""
+    confidence: float = 0.0
 
 
 @dataclass

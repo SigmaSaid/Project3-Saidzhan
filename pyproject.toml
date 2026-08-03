@@ -60,7 +60,7 @@ ice_news_pipeline = ["py.typed"]
 [tool.pytest.ini_options]
 minversion = "8.0"
 addopts = "-ra --strict-config --strict-markers"
-testpaths = ["test"]
+testpaths = ["tests"]
 markers = [
   "integration: requires network access to Hugging Face",
 ]

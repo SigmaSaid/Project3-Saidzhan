@@ -227,7 +227,7 @@ def extract_document(
         flags.append("unexpected_url_path")
     if canonical and input_url and canonical != input_url:
         flags.append("canonical_url_mismatch")
-   if (
+    if (
     input_url
     and urlsplit(input_url).netloc.casefold() not in {"ice.gov", "www.ice.gov"}
 ):

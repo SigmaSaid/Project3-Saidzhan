@@ -250,7 +250,6 @@ def extract_document(
         "missing_title",
         "missing_published_date",
         "missing_body",
-        "short_body",
         "unexpected_url_path",
         "canonical_url_mismatch",
         "unexpected_source_domain",

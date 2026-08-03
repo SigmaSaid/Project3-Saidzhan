@@ -3,6 +3,24 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urlsplit
 from bs4 import BeautifulSoup, Tag
 
+from ice_news_pipeline.schema import DocumentRecord, ParseStatus
+from ice_news_pipeline.utils import (
+    BODY_SELECTOR,
+    _TITLE_SUFFIX_RE,
+    _decode_data_layer,
+    _extract_body,
+    _extract_dateline,
+    _extract_topic_fallback,
+    _field,
+    _header_metadata,
+    _meta_content,
+    extract_image_urls,
+    extract_tables,
+    iso_date,
+    normalize_text,
+    normalize_url,
+    tokens,
+)
 
 def extract_document(
     example: dict[str, Any] | str, html_str: str | None = None

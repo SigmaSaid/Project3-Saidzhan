@@ -34,6 +34,16 @@ class PersonCandidate:
     extraction_method: str = ""
     confidence: float = 0.0
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            key: (
+                value.value
+                if isinstance(value, Enum)
+                else value
+            )
+            for key, value in self.__dict__.items()
+        }
+
 
 @dataclass
 class EventCandidate:
@@ -180,17 +190,17 @@ class ValidationResult:
 
     issues: List[Dict[str, Any]] = field(default_factory=list)
 
-
     @property
     def passed(self) -> bool:
         return self.status != GateStatus.FAIL
-
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "status": self.status.value,
             "gates": [
                 gate.to_dict()
+                if hasattr(gate, "to_dict")
+                else gate
                 for gate in self.gates
             ],
             "field_metrics": [
@@ -203,6 +213,3 @@ class ValidationResult:
             "row_accounting": self.row_accounting,
             "issues": self.issues,
         }
-
-
-DocumentRecord = ICEDocument

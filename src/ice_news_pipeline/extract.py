@@ -2,7 +2,7 @@ import hashlib
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlsplit
 from bs4 import BeautifulSoup, Tag
-
+ 
 from ice_news_pipeline.models import DocumentRecord, ParseStatus
 from ice_news_pipeline.utils import (
     BODY_SELECTOR,
@@ -21,7 +21,7 @@ from ice_news_pipeline.utils import (
     normalize_url,
     tokens,
 )
-
+ 
 def extract_document(
     example: dict[str, Any] | str, html_str: str | None = None
 ) -> DocumentRecord:
@@ -32,13 +32,13 @@ def extract_document(
     else:
         input_url = normalize_url(example.get("url") or example.get("input_url")) or ""
         raw_html = str(example.get("html") or example.get("content") or "")
-
+ 
     source_sha256 = hashlib.sha256(raw_html.encode("utf-8")).hexdigest()
     soup = BeautifulSoup(raw_html, "lxml")
     provenance: dict[str, str] = {}
     confidences: dict[str, float] = {}
     flags: list[str] = []
-
+ 
     canonical_node = soup.find("link", rel="canonical")
     canonical = (
         normalize_url(canonical_node.get("href"))
@@ -53,7 +53,7 @@ def extract_document(
         provenance,
         confidences,
     )
-
+ 
     title_node = soup.select_one(".nr-title h1")
     title = (
         normalize_text(title_node.get_text(" ", strip=True))
@@ -95,7 +95,7 @@ def extract_document(
         provenance,
         confidences,
     )
-
+ 
     subtitle_node = soup.select_one(".nr-subtitle")
     subtitle = (
         normalize_text(subtitle_node.get_text(" ", strip=True))
@@ -118,7 +118,7 @@ def extract_document(
         provenance,
         confidences,
     )
-
+ 
     date_raw, city, region, region_code, country = _header_metadata(soup)
     published = _meta_content(soup, "property", "article:published_time")
     published_method = "meta:article:published_time"
@@ -153,7 +153,7 @@ def extract_document(
         provenance,
         confidences,
     )
-
+ 
     for field_name, value in (
         ("dateline_city", city),
         ("dateline_region", region),
@@ -161,7 +161,7 @@ def extract_document(
         ("dateline_country", country),
     ):
         _field(value, field_name, "css:.nr-meta", 0.95, provenance, confidences)
-
+ 
     data_layer = _decode_data_layer(soup)
     taxonomy = data_layer.get("entityTaxonomy", {})
     topic_mapping = (
@@ -182,7 +182,7 @@ def extract_document(
             provenance["topics"] = "css:.nr-meta"
             confidences["topics"] = 0.6
             flags.append("topics_fallback_unsplit")
-
+ 
     body_text, paragraphs, body_method, body_confidence = _extract_body(soup)
     if body_text and body_method:
         provenance["body_text"] = body_method
@@ -203,14 +203,13 @@ def extract_document(
     if image_urls:
         provenance["image_urls"] = "css:.nr-image-container img,.nr-body img"
         confidences["image_urls"] = 1.0
-
+ 
     entity_bundle = normalize_text(data_layer.get("entityBundle"))
     if entity_bundle:
         provenance["entity_bundle"] = "json:dataLayer.entityBundle"
         confidences["entity_bundle"] = 1.0
-
-    print("DEBUG ENTITY:", entity_bundle)
-
+ 
+ 
     if not title:
         flags.append("missing_title")
     if not published_date:
@@ -223,29 +222,23 @@ def extract_document(
         flags.append("missing_topics")
     if entity_bundle and entity_bundle != "news_release":
         flags.append(f"unexpected_entity_bundle:{entity_bundle}")
-
+ 
     if input_url and "/news/releases/" not in urlsplit(input_url).path:
         flags.append("unexpected_url_path")
-
+ 
     if canonical and input_url and canonical != input_url:
         flags.append("canonical_url_mismatch")
-
+ 
     if (
         input_url
         and urlsplit(input_url).netloc.casefold()
         not in {"ice.gov", "www.ice.gov"}
     ):
         flags.append("unexpected_source_domain")
-
-
-    print("DEBUG URL:", input_url)
-    print("DEBUG TITLE:", title)
-    print("DEBUG DATE:", published_date)
-    print("DEBUG BODY LENGTH:", len(body_text or ""))
-    print("DEBUG TOPICS:", topics)
-    print("DEBUG FLAGS:", flags)
-
-
+ 
+ 
+ 
+ 
     quarantine_reasons = {
         "missing_title",
         "missing_published_date",
@@ -254,15 +247,15 @@ def extract_document(
         "canonical_url_mismatch",
         "unexpected_source_domain",
     }
-
+ 
     quarantined = bool(quarantine_reasons.intersection(flags)) or any(
         flag.startswith("unexpected_entity_bundle:")
         for flag in flags
     )
-
+ 
     status = ParseStatus.QUARANTINED if quarantined else ParseStatus.ACCEPTED
     identity_url = canonical or input_url
-
+ 
     data_dict = {
         "document_id": hashlib.sha256(identity_url.encode("utf-8")).hexdigest()[:20],
         "input_url": input_url,
@@ -299,9 +292,7 @@ def extract_document(
         "field_confidence": confidences,
     }
     
-    print("DEBUG STATUS:", status)
-    print("DEBUG FLAGS:", flags)
-
+ 
     try:
         return DocumentRecord(**data_dict)
     except TypeError:

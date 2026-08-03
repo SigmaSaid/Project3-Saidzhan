@@ -298,6 +298,9 @@ def extract_document(
         "field_provenance": provenance,
         "field_confidence": confidences,
     }
+    
+    print("DEBUG STATUS:", status)
+    print("DEBUG FLAGS:", flags)
 
     try:
         return DocumentRecord(**data_dict)

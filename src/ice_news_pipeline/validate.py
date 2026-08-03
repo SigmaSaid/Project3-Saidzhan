@@ -617,7 +617,7 @@ def validate_pipeline(
         )
     )
 
-    if any(g.status == GateStatus.FAIL for g in gates):
+        if any(g.status == GateStatus.FAIL for g in gates):
         overall_status = GateStatus.FAIL
     elif any(g.status == GateStatus.WARN for g in gates):
         overall_status = GateStatus.WARN
@@ -627,7 +627,7 @@ def validate_pipeline(
     return ValidationResult(
         status=overall_status,
         gates=gates,
-        field_metrics=field_metrics,
+        field_metrics=metrics,
         reference_profile=reference_profile,
         document_profile=document_profile,
         body_similarity=body_similarity,

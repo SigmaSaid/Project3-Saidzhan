@@ -50,21 +50,6 @@ class EventCandidate:
     extraction_method: str = ""
     confidence: float = 0.0
 
-@dataclass
-class ValidationResult:
-    status: GateStatus = GateStatus.SKIPPED
-
-    gates: List[ValidationGate] = field(default_factory=list)
-    field_metrics: List[FieldMetric] = field(default_factory=list)
-
-    reference_profile: Dict[str, Any] = field(default_factory=dict)
-    document_profile: Dict[str, Any] = field(default_factory=dict)
-    body_similarity: Dict[str, Any] = field(default_factory=dict)
-
-    row_accounting: Dict[str, Any] = field(default_factory=dict)
-
-    issues: List[Dict[str, Any]] = field(default_factory=list)
-
 
 @dataclass
 class ICEDocument:
@@ -157,12 +142,19 @@ class FieldMetric:
 
 
 @dataclass
-class ValidationGate:
-    name: str = ""
+class ValidationResult:
     status: GateStatus = GateStatus.SKIPPED
-    observed: str = ""
-    requirement: str = ""
-    detail: str = ""
+
+    gates: List[ValidationGate] = field(default_factory=list)
+    field_metrics: List[FieldMetric] = field(default_factory=list)
+
+    reference_profile: Dict[str, Any] = field(default_factory=dict)
+    document_profile: Dict[str, Any] = field(default_factory=dict)
+    body_similarity: Dict[str, Any] = field(default_factory=dict)
+
+    row_accounting: Dict[str, Any] = field(default_factory=dict)
+
+    issues: List[Dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass

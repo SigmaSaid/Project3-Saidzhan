@@ -61,6 +61,7 @@ ice_news_pipeline = ["py.typed"]
 minversion = "8.0"
 addopts = "-ra --strict-config --strict-markers"
 testpaths = ["tests"]
+pythonpath = ["src"]
 markers = [
   "integration: requires network access to Hugging Face",
 ]

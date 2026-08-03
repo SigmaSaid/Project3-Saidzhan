@@ -1,4 +1,6 @@
-from ice_news_pipeline.constants import BODY_SELECTOR, _TITLE_SUFFIX_RE
+import re
+
+from ice_news_pipeline.constants import BODY_SELECTOR
 from ice_news_pipeline.normalize import (
     iso_date,
     normalize_text,
@@ -6,14 +8,6 @@ from ice_news_pipeline.normalize import (
     tokens,
 )
 
-from ice_news_pipeline.source import (
-    _decode_data_layer,
-    _extract_body,
-    _extract_dateline,
-    _extract_topic_fallback,
-    _field,
-    _header_metadata,
-    _meta_content,
-    extract_image_urls,
-    extract_tables,
+_TITLE_SUFFIX_RE = re.compile(
+    r"\s*\|\s*U\.S\. Immigration and Customs Enforcement$"
 )

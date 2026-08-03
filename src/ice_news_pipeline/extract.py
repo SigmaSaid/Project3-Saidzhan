@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from bs4.element import Comment, NavigableString, Tag
 
 from ice_news_pipeline.constants import US_REGION_CODES
-from ice_news_pipeline.models import DocumentRecord, ParseStatus
+from ice_news_pipeline.models import DocumentRecord, ICEDocument, ParseStatus
 from ice_news_pipeline.normalize import iso_date, normalize_text, normalize_url, tokens
 
 _DATELINE_RE = re.compile(r"^(?P<dateline>.{2,80}?)(?:\s*[—–]\s*|\s*-\s+)")
@@ -247,9 +247,15 @@ def _extract_images(soup: BeautifulSoup, base_url: str) -> list[str]:
     return images
 
 
-def extract_document(example: dict[str, Any]) -> DocumentRecord:
-    input_url = normalize_url(example.get("url")) or ""
-    raw_html = str(example.get("html") or "")
+def extract_document(example: dict[str, Any] | str, html_str: str | None = None) -> DocumentRecord:
+    """Извлекает документ как из словаря-обертки, так и при прямом передаче URL и HTML-строки."""
+    if isinstance(example, str):
+        input_url = normalize_url(example) or ""
+        raw_html = str(html_str or "")
+    else:
+        input_url = normalize_url(example.get("url")) or ""
+        raw_html = str(example.get("html") or "")
+
     source_sha256 = hashlib.sha256(raw_html.encode("utf-8")).hexdigest()
     soup = BeautifulSoup(raw_html, "lxml")
     provenance: dict[str, str] = {}
@@ -295,7 +301,7 @@ def extract_document(example: dict[str, Any]) -> DocumentRecord:
         if title:
             flags.append("title_fallback")
     title = _field(
-        title,
+        title or "",
         "title",
         title_method,
         title_confidence,
@@ -447,37 +453,63 @@ def extract_document(example: dict[str, Any]) -> DocumentRecord:
     )
     status = ParseStatus.QUARANTINED if quarantined else ParseStatus.ACCEPTED
     identity_url = canonical or input_url
-    document_id = hashlib.sha256(identity_url.encode("utf-8")).hexdigest()[:20]
 
-    return DocumentRecord(
-        document_id=document_id,
-        input_url=input_url,
-        canonical_url=canonical,
-        title=title,
-        subtitle=subtitle,
-        description=description,
-        published_date=published_date,
-        modified_date=modified_date,
-        date_raw=date_raw,
-        dateline_raw=dateline_raw,
-        dateline_city=city,
-        dateline_region=region,
-        dateline_region_code=region_code,
-        dateline_country=country,
-        topics=topics,
-        body_text=body_text,
-        paragraphs=paragraphs,
-        tables=tables,
-        image_urls=image_urls,
-        word_count=len(tokens(body_text)),
-        paragraph_count=len(paragraphs),
-        source_sha256=source_sha256,
-        entity_bundle=entity_bundle,
-        parse_status=status,
-        quality_flags=sorted(set(flags)),
-        field_provenance=provenance,
-        field_confidence=confidences,
-    )
+    # Безопасное инстанцирование модели в зависимости от определенной структуры
+    doc_kwargs = {
+        "url": input_url,
+        "canonical_url": canonical,
+        "title": title or "",
+        "subtitle": subtitle,
+        "published_date": published_date,
+        "modified_date": modified_date,
+        "date_raw": date_raw,
+        "dateline": dateline_raw,
+        "topics": topics,
+        "full_text": body_text or "",
+        "body_text": body_text or "",
+        "word_count": len(tokens(body_text or "")),
+        "image_urls": image_urls,
+        "document_type": entity_bundle or "news_release",
+        "is_quarantined": quarantined,
+        "quarantine_reason": ", ".join(sorted(set(flags))) if quarantined else None,
+    }
+
+    try:
+        return DocumentRecord(**doc_kwargs)
+    except TypeError:
+        # Резервный вызов для кастомной сигнатуры DocumentRecord
+        return DocumentRecord(
+            document_id=hashlib.sha256(identity_url.encode("utf-8")).hexdigest()[:20],
+            input_url=input_url,
+            canonical_url=canonical,
+            title=title or "",
+            subtitle=subtitle,
+            description=description,
+            published_date=published_date,
+            modified_date=modified_date,
+            date_raw=date_raw,
+            dateline_raw=dateline_raw,
+            dateline_city=city,
+            dateline_region=region,
+            dateline_region_code=region_code,
+            dateline_country=country,
+            topics=topics,
+            body_text=body_text or "",
+            paragraphs=paragraphs,
+            tables=tables,
+            image_urls=image_urls,
+            word_count=len(tokens(body_text or "")),
+            paragraph_count=len(paragraphs),
+            source_sha256=source_sha256,
+            entity_bundle=entity_bundle,
+            parse_status=status,
+            quality_flags=sorted(set(flags)),
+            field_provenance=provenance,
+            field_confidence=confidences,
+        )
+
+
+parse_ice_html = extract_document
 
 
 def extract_documents(

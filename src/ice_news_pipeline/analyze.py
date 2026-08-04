@@ -1,4 +1,5 @@
 from __future__ import annotations
+from matplotlib.axes import Axes
 
 import os
 import tempfile
@@ -217,7 +218,7 @@ def build_analysis_tables(documents: list[DocumentRecord]) -> dict[str, pd.DataF
     }
 
 
-def _style_axis(axis: plt.Axes) -> None:
+def _style_axis(axis: Axes) -> None:
     axis.spines["top"].set_visible(False)
     axis.spines["right"].set_visible(False)
     axis.spines["left"].set_color(LIGHT)

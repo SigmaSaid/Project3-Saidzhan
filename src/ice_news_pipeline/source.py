@@ -84,9 +84,7 @@ def load_huggingface_inputs(
 
     if limit is not None:
         raw_dataset = raw_dataset.select(range(min(limit, len(raw_dataset))))
-        reference_dataset = reference_dataset.select(
-            range(min(limit, len(reference_dataset)))
-        )
+        reference_dataset = reference_dataset.select(range(min(limit, len(reference_dataset))))
 
     return LoadedInputs(
         raw=[dict(row) for row in raw_dataset],

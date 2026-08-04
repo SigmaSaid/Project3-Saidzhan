@@ -14,7 +14,7 @@ class LoadedInputs:
 
 
 def _read_jsonl(path: str | Path) -> list[dict[str, Any]]:
-    rows = []
+    rows: list[dict[str, Any]] = []
 
     path = Path(path)
 

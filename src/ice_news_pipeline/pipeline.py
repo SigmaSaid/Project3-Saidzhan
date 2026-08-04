@@ -130,6 +130,8 @@ def _dependency_versions() -> dict[str, str]:
 def _flag_duplicate_source_html(documents: list[DocumentRecord]) -> None:
     by_hash: dict[str, list[DocumentRecord]] = {}
     for document in documents:
+        if document.source_sha256 is None:
+            continue
         by_hash.setdefault(document.source_sha256, []).append(document)
         
     for matching in by_hash.values():

@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import hashlib
@@ -63,9 +62,7 @@ def profile_reference(reference: list[dict[str, Any]]) -> dict[str, Any]:
         if published is None and not is_missing(row.get("date_normalized")):
             invalid_published.append({"url": row.get("url"), "value": row.get("date_normalized")})
         if modified is None and not is_missing(row.get("date_last_updated")):
-            invalid_modified.append(
-                {"url": row.get("url"), "value": row.get("date_last_updated")}
-            )
+            invalid_modified.append({"url": row.get("url"), "value": row.get("date_last_updated")})
         if published:
             years[str(published.year)] += 1
         else:
@@ -120,7 +117,8 @@ def profile_reference(reference: list[dict[str, Any]]) -> dict[str, Any]:
 
 def profile_documents(documents: list[DocumentRecord]) -> dict[str, Any]:
     accepted = [
-        doc for doc in documents 
+        doc
+        for doc in documents
         if (getattr(doc.parse_status, "value", str(doc.parse_status)) == "accepted")
     ]
     published_dates = [
@@ -151,7 +149,10 @@ def profile_documents(documents: list[DocumentRecord]) -> dict[str, Any]:
         "accepted_rows": len(accepted),
         "valid_published_dates": len(published_dates),
         "valid_modified_dates": len(modified_dates),
-        "raw_datelines_present": sum(getattr(doc, "dateline_raw", getattr(doc, "dateline", None)) is not None for doc in accepted),
+        "raw_datelines_present": sum(
+            getattr(doc, "dateline_raw", getattr(doc, "dateline", None)) is not None
+            for doc in accepted
+        ),
         "dateline_regions_present": sum(
             getattr(doc, "dateline_region", None) is not None for doc in accepted
         ),
@@ -343,7 +344,9 @@ def _candidate_offset_issues(
         )
         if not valid:
             candidate_id = (
-                candidate.event_id if isinstance(candidate, EventCandidate) else candidate.mention_id
+                candidate.event_id
+                if isinstance(candidate, EventCandidate)
+                else candidate.mention_id
             )
             issues.append(
                 {
@@ -452,11 +455,13 @@ def validate_pipeline(
     )
 
     accepted = [
-        doc for doc in documents 
+        doc
+        for doc in documents
         if (getattr(doc.parse_status, "value", str(doc.parse_status)) == "accepted")
     ]
     quarantined = [
-        doc for doc in documents 
+        doc
+        for doc in documents
         if (getattr(doc.parse_status, "value", str(doc.parse_status)) == "quarantined")
     ]
     accounting_ok = len(raw_rows) == len(accepted) + len(quarantined) == len(documents)
@@ -493,9 +498,7 @@ def validate_pipeline(
         )
     )
 
-    documents_by_url = {
-        getattr(doc, "input_url", doc.url): doc for doc in documents
-    }
+    documents_by_url = {getattr(doc, "input_url", doc.url): doc for doc in documents}
     reference_by_url = {
         normalized: row
         for row in reference
@@ -513,9 +516,7 @@ def validate_pipeline(
         "body_text",
         "image_urls",
     )
-    field_metrics = [
-        _field_metric(field, documents_by_url, reference_by_url) for field in fields
-    ]
+    field_metrics = [_field_metric(field, documents_by_url, reference_by_url) for field in fields]
     metrics_by_field = {metric.field: metric for metric in field_metrics}
     for field, threshold in (
         ("title", 0.99),
@@ -546,9 +547,7 @@ def validate_pipeline(
         )
 
     body_similarity = _body_similarity(documents_by_url, reference_by_url)
-    issues.extend(
-        _comparison_issues(fields, documents_by_url, reference_by_url)
-    )
+    issues.extend(_comparison_issues(fields, documents_by_url, reference_by_url))
     body_gate_ok = (
         float(body_similarity["median_token_f1"]) >= 0.99
         and float(body_similarity["p05_token_f1"]) >= 0.95
@@ -577,7 +576,7 @@ def validate_pipeline(
     )
 
     documents_by_id = {
-        getattr(doc, "document_id", getattr(doc, "url", str(idx))): doc 
+        getattr(doc, "document_id", getattr(doc, "url", str(idx))): doc
         for idx, doc in enumerate(documents)
     }
     offset_issues = _candidate_offset_issues(documents_by_id, [*events, *people])

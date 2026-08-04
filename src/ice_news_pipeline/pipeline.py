@@ -97,7 +97,7 @@ def _flatten_document_dicts(doc_dicts: list[dict[str, Any]]) -> pd.DataFrame:
         "field_provenance",
         "field_confidence",
     }
-    
+
     for original_row in doc_dicts:
         row = original_row.copy()
         for field in nested_fields:
@@ -131,14 +131,12 @@ def _flag_duplicate_source_html(documents: list[DocumentRecord]) -> None:
     by_hash: dict[str, list[DocumentRecord]] = {}
     for document in documents:
         by_hash.setdefault(document.source_sha256, []).append(document)
-        
+
     for matching in by_hash.values():
         if len(matching) < 2:
             continue
         for document in matching:
-            document.quality_flags = sorted(
-                {*document.quality_flags, "duplicate_source_html"}
-            )
+            document.quality_flags = sorted({*document.quality_flags, "duplicate_source_html"})
 
 
 def _write_artifacts(
@@ -171,7 +169,9 @@ def _write_artifacts(
             executor.submit(_write_jsonl, output_dir / "event_candidates.jsonl", event_dicts),
             executor.submit(_write_jsonl, output_dir / "person_candidates.jsonl", person_dicts),
             executor.submit(flat_documents.to_csv, output_dir / "documents.csv", index=False),
-            executor.submit(flat_documents.to_parquet, output_dir / "documents.parquet", index=False),
+            executor.submit(
+                flat_documents.to_parquet, output_dir / "documents.parquet", index=False
+            ),
             executor.submit(_write_json, output_dir / "validation.json", run.validation.to_dict()),
             executor.submit(_write_json, output_dir / "run_manifest.json", run.manifest),
             executor.submit(_write_json, report_dir / "validation.json", run.validation.to_dict()),
@@ -182,8 +182,12 @@ def _write_artifacts(
                 index=False,
             ),
             executor.submit(audit_sample.to_csv, report_dir / "audit_sample.csv", index=False),
-            executor.submit(event_audit.to_csv, report_dir / "event_candidate_audit.csv", index=False),
-            executor.submit(person_audit.to_csv, report_dir / "person_candidate_audit.csv", index=False),
+            executor.submit(
+                event_audit.to_csv, report_dir / "event_candidate_audit.csv", index=False
+            ),
+            executor.submit(
+                person_audit.to_csv, report_dir / "person_candidate_audit.csv", index=False
+            ),
         ]
 
         for name, table in analysis_tables.items():
@@ -199,7 +203,7 @@ def _write_artifacts(
         run.manifest["source"],
     )
     write_findings_report(report_dir / "FINDINGS.md", analysis_tables, run.validation)
-    
+
     if figures:
         write_figures(analysis_tables, report_dir / "figures")
 
@@ -220,7 +224,7 @@ def run_pipeline(
     documents = list(extract_documents(raw_rows, workers=workers))
 
     _flag_duplicate_source_html(documents)
-    
+
     accepted = [doc for doc in documents if doc.parse_status.value == "accepted"]
 
     events: list[EventCandidate] = []
@@ -271,7 +275,7 @@ def run_pipeline(
         output_dir=output_dir,
         report_dir=report_dir,
     )
-    
+
     _write_artifacts(run, analysis_tables, audit_sample, figures=figures)
     return run
 

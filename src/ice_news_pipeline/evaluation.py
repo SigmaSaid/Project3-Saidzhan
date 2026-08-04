@@ -90,8 +90,7 @@ def evaluate_audit(path: Path) -> dict[str, Any]:
         ):
             if int(clean[false_positive_field]) > int(clean[candidate_field]):
                 raise ValueError(
-                    f"row {row_number}: {false_positive_field} exceeds "
-                    f"{candidate_field}"
+                    f"row {row_number}: {false_positive_field} exceeds {candidate_field}"
                 )
         normalized.append(clean)
 

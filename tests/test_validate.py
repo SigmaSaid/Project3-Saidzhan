@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-
-from tests.conftest import reference_from_document
-
 from ice_news_pipeline.claims import extract_event_candidates, extract_person_candidates
 from ice_news_pipeline.extract import extract_document
 from ice_news_pipeline.models import GateStatus
 from ice_news_pipeline.validate import profile_reference, validate_pipeline
+from tests.conftest import reference_from_document
 
 
 def test_validation_separates_completeness_from_validity(release_html: str) -> None:
@@ -68,9 +66,7 @@ def test_core_gate_cannot_pass_when_extraction_coverage_is_zero(
     document.topics = []
 
     result = validate_pipeline([raw], [document], [reference], [], [])
-    topic_gate = next(
-        gate for gate in result.gates if gate.name == "topics_reference_agreement"
-    )
+    topic_gate = next(gate for gate in result.gates if gate.name == "topics_reference_agreement")
 
     assert topic_gate.status is GateStatus.FAIL
     assert "exact=0/1" in topic_gate.observed

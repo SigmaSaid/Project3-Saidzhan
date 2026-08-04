@@ -24,7 +24,9 @@ def test_event_candidates_preserve_stage_qualifier_and_offsets(release_html: str
 
     charge = next(candidate for candidate in candidates if candidate.action_type == "charge")
     sentence = next(candidate for candidate in candidates if candidate.action_type == "sentence")
-    conviction = next(candidate for candidate in candidates if candidate.action_type == "conviction")
+    conviction = next(
+        candidate for candidate in candidates if candidate.action_type == "conviction"
+    )
     assert charge.legal_stage == "charged"
     assert sentence.legal_stage == "sentenced"
     assert conviction.legal_stage == "convicted"

@@ -33,11 +33,9 @@ def documents_frame(documents: list[DocumentRecord]) -> pd.DataFrame:
 
     rows: list[dict[str, Any]] = []
     for document in documents:
-        published = (
-            date.fromisoformat(document.published_date) if document.published_date else None
-        )
+        published = date.fromisoformat(document.published_date) if document.published_date else None
         modified = date.fromisoformat(document.modified_date) if document.modified_date else None
-        
+
         rows.append(
             {
                 "document_id": document.document_id,
@@ -97,8 +95,12 @@ def build_analysis_tables(documents: list[DocumentRecord]) -> dict[str, pd.DataF
         return {
             "documents": frame,
             "monthly_volume": pd.DataFrame(columns=["month", "documents"]),
-            "dateline_regions": pd.DataFrame(columns=["dateline_region", "documents", "share_of_known"]),
-            "topics": pd.DataFrame(columns=["topic", "documents", "share_of_documents_with_topics"]),
+            "dateline_regions": pd.DataFrame(
+                columns=["dateline_region", "documents", "share_of_known"]
+            ),
+            "topics": pd.DataFrame(
+                columns=["topic", "documents", "share_of_documents_with_topics"]
+            ),
             "missingness_by_year": pd.DataFrame(),
             "modification_lag_buckets": pd.DataFrame(columns=["lag_bucket", "documents", "share"]),
             "field_provenance": pd.DataFrame(),
@@ -125,7 +127,7 @@ def build_analysis_tables(documents: list[DocumentRecord]) -> dict[str, pd.DataF
         .rename(columns={"topics": "topic"})
     )
     known_topic_documents = int(accepted["topics"].map(bool).sum())
-    
+
     if not topic_frame.empty:
         topics = (
             topic_frame.groupby("topic")["document_id"]
@@ -192,8 +194,8 @@ def build_analysis_tables(documents: list[DocumentRecord]) -> dict[str, pd.DataF
             .sort_values(["field", "documents"], ascending=[True, False])
         )
         field_denominators = Counter(row["field"] for row in provenance_rows)
-        provenance["share_within_field"] = (
-            provenance["documents"] / provenance["field"].map(field_denominators)
+        provenance["share_within_field"] = provenance["documents"] / provenance["field"].map(
+            field_denominators
         )
     else:
         provenance = pd.DataFrame(columns=["field", "method", "documents", "share_within_field"])
@@ -235,14 +237,14 @@ def _plot_monthly_volume(monthly: pd.DataFrame, figure_dir: Path) -> Path:
     figure, axis = plt.subplots(figsize=(12, 5.8))
     colors = [GOLD if index in {0, len(recent) - 1} else CARDINAL for index in range(len(recent))]
     bars = axis.bar(recent["month"], recent["documents"], color=colors, width=0.78)
-    
+
     axis.bar_label(bars, padding=3, fontsize=9, color=DARK)
     axis.set_title("ICE press releases in the dataset by publication month")
     axis.set_ylabel("Documents")
     axis.set_xlabel("Publication month (edge months are incomplete)")
     axis.tick_params(axis="x", rotation=55)
     _style_axis(axis)
-    
+
     figure.tight_layout()
     path = figure_dir / "monthly_release_volume.png"
     figure.savefig(path, dpi=180, bbox_inches="tight")
@@ -263,7 +265,7 @@ def _plot_horizontal_bars(
     data = df.head(12).sort_values(value_col)
     figure, axis = plt.subplots(figsize=(10, 6.4))
     bars = axis.barh(data[category_col], data[value_col], color=color)
-    
+
     axis.bar_label(bars, padding=4, fontsize=9, color=DARK)
     axis.set_title(title)
     axis.set_xlabel(xlabel)
@@ -271,7 +273,7 @@ def _plot_horizontal_bars(
     _style_axis(axis)
     axis.grid(axis="x", color=LIGHT, alpha=0.55, linewidth=0.8)
     axis.grid(axis="y", visible=False)
-    
+
     figure.tight_layout()
     path = figure_dir / filename
     figure.savefig(path, dpi=180, bbox_inches="tight")

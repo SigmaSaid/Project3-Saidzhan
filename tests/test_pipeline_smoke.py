@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tests.conftest import reference_from_document
-
 from ice_news_pipeline.extract import extract_document
 from ice_news_pipeline.pipeline import run_pipeline
 from ice_news_pipeline.source import LoadedInputs
+from tests.conftest import reference_from_document
 
 
 def test_offline_pipeline_writes_auditable_artifacts(
@@ -47,7 +46,7 @@ def test_offline_pipeline_writes_auditable_artifacts(
     assert (report_dir / "audit_sample.csv").is_file()
     assert (report_dir / "event_candidate_audit.csv").is_file()
     assert (report_dir / "person_candidate_audit.csv").is_file()
-    
+
     report = (report_dir / "VALIDATION_REPORT.md").read_text(encoding="utf-8")
     assert "PASS WITH WARNINGS" in report
     assert "populated" in report
@@ -75,9 +74,7 @@ def test_all_quarantined_run_writes_fail_safe_reports(
     )
 
     findings = (tmp_path / "reports" / "FINDINGS.md").read_text(encoding="utf-8")
-    validation = (tmp_path / "reports" / "VALIDATION_REPORT.md").read_text(
-        encoding="utf-8"
-    )
+    validation = (tmp_path / "reports" / "VALIDATION_REPORT.md").read_text(encoding="utf-8")
     assert run.validation.status.value == "fail"
     assert "Descriptive findings withheld" in findings
     assert "NOT READY" in validation

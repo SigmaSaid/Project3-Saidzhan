@@ -48,49 +48,59 @@ def write_validation_report(
     quarantined = [doc for doc in documents if doc.parse_status.value == "quarantined"]
     invalid_modified = profile["invalid_modified_examples"]
 
-    gates_df = pd.DataFrame([
-        {
-            "Gate": g.name,
-            "Status": g.status.value.upper(),
-            "Observed": g.observed,
-            "Requirement": g.requirement,
-            "Interpretation": g.detail,
-        }
-        for g in validation.gates
-    ])
+    gates_df = pd.DataFrame(
+        [
+            {
+                "Gate": g.name,
+                "Status": g.status.value.upper(),
+                "Observed": g.observed,
+                "Requirement": g.requirement,
+                "Interpretation": g.detail,
+            }
+            for g in validation.gates
+        ]
+    )
 
-    metrics_df = pd.DataFrame([
-        {
-            "Field": m.field,
-            "Reference present": m.reference_present,
-            "Extracted present": m.extracted_present,
-            "Paired": m.both_present,
-            "Coverage": _safe_pct(m.coverage, 1.0),
-            "Exact / paired": (
-                f"{m.exact_matches}/{m.both_present} ({_safe_pct(m.exact_matches, m.both_present)})"
-                if m.both_present else "not measurable"
-            ),
-            "Extra DOM values": m.false_positives,
-        }
-        for m in validation.field_metrics
-    ])
+    metrics_df = pd.DataFrame(
+        [
+            {
+                "Field": m.field,
+                "Reference present": m.reference_present,
+                "Extracted present": m.extracted_present,
+                "Paired": m.both_present,
+                "Coverage": _safe_pct(m.coverage, 1.0),
+                "Exact / paired": (
+                    f"{m.exact_matches}/{m.both_present} ({_safe_pct(m.exact_matches, m.both_present)})"
+                    if m.both_present
+                    else "not measurable"
+                ),
+                "Extra DOM values": m.false_positives,
+            }
+            for m in validation.field_metrics
+        ]
+    )
 
-    invalid_dates_df = pd.DataFrame([
-        {
-            "Source URL": item["url"],
-            "Invalid populated value": str(item["value"])[:180] + ("…" if len(str(item["value"])) > 180 else ""),
-        }
-        for item in invalid_modified
-    ])
+    invalid_dates_df = pd.DataFrame(
+        [
+            {
+                "Source URL": item["url"],
+                "Invalid populated value": str(item["value"])[:180]
+                + ("…" if len(str(item["value"])) > 180 else ""),
+            }
+            for item in invalid_modified
+        ]
+    )
 
-    quarantine_df = pd.DataFrame([
-        {
-            "URL": doc.input_url,
-            "Drupal entity type": doc.entity_bundle,
-            "Quality flags": "; ".join(doc.quality_flags),
-        }
-        for doc in quarantined
-    ])
+    quarantine_df = pd.DataFrame(
+        [
+            {
+                "URL": doc.input_url,
+                "Drupal entity type": doc.entity_bundle,
+                "Quality flags": "; ".join(doc.quality_flags),
+            }
+            for doc in quarantined
+        ]
+    )
 
     review_issues = [
         issue for issue in validation.issues if issue.get("type") == "silver_reference_mismatch"
@@ -100,21 +110,22 @@ def write_validation_report(
         key=lambda issue: float(issue.get("token_f1", 1.0)),
     )[:10]
 
-    body_review_df = pd.DataFrame([
-        {
-            "URL": issue["url"],
-            "Token F1": f"{float(issue['token_f1']):.4f}",
-            "Reference / DOM tokens": f"{issue['reference_tokens']} / {issue['extracted_tokens']}",
-            "First difference": issue["difference_context"],
-        }
-        for issue in body_review
-    ])
+    body_review_df = pd.DataFrame(
+        [
+            {
+                "URL": issue["url"],
+                "Token F1": f"{float(issue['token_f1']):.4f}",
+                "Reference / DOM tokens": f"{issue['reference_tokens']} / {issue['extracted_tokens']}",
+                "First difference": issue["difference_context"],
+            }
+            for issue in body_review
+        ]
+    )
 
-    
     body = validation.body_similarity
     gates_by_name = {gate.name: gate for gate in validation.gates}
     join_gate = gates_by_name["one_to_one_join"]
-    
+
     join_summary = (
         "URL sets match one-to-one between the `html` and `default` configurations."
         if join_gate.status is GateStatus.PASS
@@ -137,7 +148,6 @@ def write_validation_report(
 
     ref_lag, ext_lag = profile["modification_lag"], document_profile["modification_lag"]
 
-  
     content = f"""# Validation report
 
 **Decision:** {_decision(validation)}
@@ -224,7 +234,7 @@ def write_findings_report(
         content = f"""# Descriptive findings withheld
 
 No release-level findings were generated because the automated validation result is `FAIL`.
-Accepted rows: {validation.row_accounting['accepted']:,}/{validation.row_accounting['input']:,}. 
+Accepted rows: {validation.row_accounting["accepted"]:,}/{validation.row_accounting["input"]:,}. 
 Failed gates: {", ".join(f"`{name}`" for name in failed_gates)}.
 """
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -244,20 +254,27 @@ Failed gates: {", ".join(f"`{name}`" for name in failed_gates)}.
     multi_topic = int((accepted["topic_count"] > 1).sum())
     known_topic = int((accepted["topic_count"] > 0).sum())
     known_regions = int(accepted["dateline_region"].notna().sum())
-    
- 
+
     monthly_df = monthly[["month", "documents"]].rename(
         columns={"month": "Publication month", "documents": "Documents"}
     )
-    
+
     topics_df = topics.assign(
-        **{"Share of documents with topics": lambda df: df["share_of_documents_with_topics"].map(lambda x: f"{float(x):.2%}")}
+        **{
+            "Share of documents with topics": lambda df: df["share_of_documents_with_topics"].map(
+                lambda x: f"{float(x):.2%}"
+            )
+        }
     )[["topic", "documents", "Share of documents with topics"]].rename(
         columns={"topic": "Topic", "documents": "Documents"}
     )
 
     regions_df = regions.assign(
-        **{f"Share of populated regions (n={known_regions:,})": lambda df: df["share_of_known"].map(lambda x: f"{float(x):.2%}")}
+        **{
+            f"Share of populated regions (n={known_regions:,})": lambda df: df[
+                "share_of_known"
+            ].map(lambda x: f"{float(x):.2%}")
+        }
     )[["dateline_region", "documents", f"Share of populated regions (n={known_regions:,})"]].rename(
         columns={"dateline_region": "Metadata dateline region", "documents": "Documents"}
     )
@@ -273,7 +290,7 @@ These findings describe **which ICE press releases appear in this dataset and ho
 - Accepted press releases: {len(accepted):,}
 - Valid publication dates: {len(dated):,}
 - 2025–2026 releases: {recent_count:,}/{len(dated):,} ({_safe_pct(recent_count, len(dated))})
-- Quarantined non-release pages: {validation.row_accounting['quarantined']:,}
+- Quarantined non-release pages: {validation.row_accounting["quarantined"]:,}
 
 ![Monthly publication volume](figures/monthly_release_volume.png)
 
@@ -312,13 +329,12 @@ def build_audit_sample(
     by_id = {doc.document_id: doc for doc in documents}
     accepted = [doc for doc in documents if doc.parse_status.value == "accepted"]
 
-
     for doc in documents:
         if doc.parse_status.value == "quarantined":
             reasons[doc.document_id].add("quarantine")
         if doc.tables:
             reasons[doc.document_id].add("contains_table")
-            
+
     for doc in sorted(accepted, key=lambda d: (-len(d.topics), d.document_id))[:4]:
         if len(doc.topics) > 1:
             reasons[doc.document_id].add("multi_topic")
@@ -329,11 +345,11 @@ def build_audit_sample(
         reasons[doc.document_id].add("longest")
 
     selected = set(reasons)
-    
+
     pool = sorted([doc.document_id for doc in accepted if doc.document_id not in selected])
     randomizer = random.Random(seed)
     randomizer.shuffle(pool)
-    
+
     for doc_id in pool:
         if len(selected) >= size:
             break

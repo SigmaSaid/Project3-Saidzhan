@@ -1,0 +1,313 @@
+{
+  "body_similarity": {
+    "below_0_90": 0,
+    "below_0_95": 0,
+    "compared": 0,
+    "exact_matches": 0,
+    "exact_rate": 0.0,
+    "mean_token_f1": 0.0,
+    "median_token_f1": 0.0,
+    "minimum_token_f1": 0.0,
+    "p05_token_f1": 0.0
+  },
+  "document_profile": {
+    "accepted_rows": 0,
+    "dateline_regions_present": 0,
+    "modification_lag": {
+      "max_days": 0,
+      "median_days": 0.0,
+      "negative": 0,
+      "p95_days": 0.0,
+      "same_day": 0,
+      "valid_pairs": 0
+    },
+    "published_date_end": null,
+    "published_date_start": null,
+    "raw_datelines_present": 0,
+    "valid_modified_dates": 0,
+    "valid_published_dates": 0
+  },
+  "field_metrics": [
+    {
+      "agreement": 1.0,
+      "both_present": 0,
+      "coverage": 1.0,
+      "exact_matches": 0,
+      "extracted_present": 0,
+      "false_positives": 0,
+      "field": "title",
+      "reference_present": 0
+    },
+    {
+      "agreement": 1.0,
+      "both_present": 0,
+      "coverage": 1.0,
+      "exact_matches": 0,
+      "extracted_present": 0,
+      "false_positives": 0,
+      "field": "subtitle",
+      "reference_present": 0
+    },
+    {
+      "agreement": 1.0,
+      "both_present": 0,
+      "coverage": 1.0,
+      "exact_matches": 0,
+      "extracted_present": 0,
+      "false_positives": 0,
+      "field": "topics",
+      "reference_present": 0
+    },
+    {
+      "agreement": 1.0,
+      "both_present": 0,
+      "coverage": 1.0,
+      "exact_matches": 0,
+      "extracted_present": 0,
+      "false_positives": 0,
+      "field": "published_date",
+      "reference_present": 0
+    },
+    {
+      "agreement": 1.0,
+      "both_present": 0,
+      "coverage": 1.0,
+      "exact_matches": 0,
+      "extracted_present": 0,
+      "false_positives": 0,
+      "field": "modified_date",
+      "reference_present": 0
+    },
+    {
+      "agreement": 1.0,
+      "both_present": 0,
+      "coverage": 1.0,
+      "exact_matches": 0,
+      "extracted_present": 0,
+      "false_positives": 0,
+      "field": "dateline_raw",
+      "reference_present": 0
+    },
+    {
+      "agreement": 1.0,
+      "both_present": 0,
+      "coverage": 1.0,
+      "exact_matches": 0,
+      "extracted_present": 0,
+      "false_positives": 0,
+      "field": "dateline_city",
+      "reference_present": 0
+    },
+    {
+      "agreement": 1.0,
+      "both_present": 0,
+      "coverage": 1.0,
+      "exact_matches": 0,
+      "extracted_present": 0,
+      "false_positives": 0,
+      "field": "dateline_region",
+      "reference_present": 0
+    },
+    {
+      "agreement": 1.0,
+      "both_present": 0,
+      "coverage": 1.0,
+      "exact_matches": 0,
+      "extracted_present": 0,
+      "false_positives": 0,
+      "field": "body_text",
+      "reference_present": 0
+    },
+    {
+      "agreement": 1.0,
+      "both_present": 0,
+      "coverage": 1.0,
+      "exact_matches": 0,
+      "extracted_present": 0,
+      "false_positives": 0,
+      "field": "image_urls",
+      "reference_present": 0
+    }
+  ],
+  "gates": [
+    {
+      "detail": "Raw rows require non-empty url/html; reference rows require all documented fields.",
+      "name": "source_schema",
+      "observed": "50 errors",
+      "requirement": "0 errors",
+      "status": "fail"
+    },
+    {
+      "detail": "Titles are not keys; the pipeline joins only on normalized source URL.",
+      "name": "url_uniqueness",
+      "observed": "raw=50/50, reference=0/0",
+      "requirement": "100% unique in each config",
+      "status": "pass"
+    },
+    {
+      "detail": "The HTML and structured configurations must describe the same source documents.",
+      "name": "one_to_one_join",
+      "observed": "shared=0",
+      "requirement": "identical URL sets",
+      "status": "fail"
+    },
+    {
+      "detail": "No row may disappear silently.",
+      "name": "row_accounting",
+      "observed": "input=50, accepted=0, quarantined=50",
+      "requirement": "input = accepted + quarantined",
+      "status": "pass"
+    },
+    {
+      "detail": "A page must have the release DOM, dates, canonical identity, and article body.",
+      "name": "release_signature",
+      "observed": "0/50 accepted",
+      "requirement": ">= 99% accepted; all exceptions quarantined",
+      "status": "fail"
+    },
+    {
+      "detail": "Fallback growth is treated as template drift, not silently accepted.",
+      "name": "primary_body_selector",
+      "observed": "0.000%",
+      "requirement": ">= 99.0%",
+      "status": "fail"
+    },
+    {
+      "detail": "Agreement is measured only where both the DOM extraction and silver reference have a value; the gate also penalizes missing extracted values.",
+      "name": "title_reference_agreement",
+      "observed": "exact=0/0; paired agreement=100.000%",
+      "requirement": "exact/reference-present >= 99.0%",
+      "status": "warn"
+    },
+    {
+      "detail": "Agreement is measured only where both the DOM extraction and silver reference have a value; the gate also penalizes missing extracted values.",
+      "name": "topics_reference_agreement",
+      "observed": "exact=0/0; paired agreement=100.000%",
+      "requirement": "exact/reference-present >= 99.0%",
+      "status": "warn"
+    },
+    {
+      "detail": "Agreement is measured only where both the DOM extraction and silver reference have a value; the gate also penalizes missing extracted values.",
+      "name": "published_date_reference_agreement",
+      "observed": "exact=0/0; paired agreement=100.000%",
+      "requirement": "exact/reference-present >= 99.0%",
+      "status": "warn"
+    },
+    {
+      "detail": "Agreement is measured only where both the DOM extraction and silver reference have a value; the gate also penalizes missing extracted values.",
+      "name": "dateline_city_reference_agreement",
+      "observed": "exact=0/0; paired agreement=100.000%",
+      "requirement": "exact/reference-present >= 99.0%",
+      "status": "warn"
+    },
+    {
+      "detail": "Token F1 tolerates documented block-level differences in the silver reference.",
+      "name": "body_similarity",
+      "observed": "median=0.000, p05=0.000",
+      "requirement": "median >= 0.99 and p05 >= 0.95",
+      "status": "fail"
+    },
+    {
+      "detail": "Low similarity can mean a DOM omission or useful content missing from the silver reference.",
+      "name": "body_outlier_review",
+      "observed": "0/0 below 0.90 token F1",
+      "requirement": "every outlier enters a human review queue",
+      "status": "pass"
+    },
+    {
+      "detail": "Every candidate must link back to an exact source-text span.",
+      "name": "evidence_offsets",
+      "observed": "0 invalid offsets",
+      "requirement": "0 invalid offsets",
+      "status": "pass"
+    },
+    {
+      "detail": "The companion structured data is a comparison reference, not ground truth.",
+      "name": "silver_reference_validity",
+      "observed": "0 populated modified-date values are not dates",
+      "requirement": "report completeness and validity separately",
+      "status": "pass"
+    },
+    {
+      "detail": "Candidate rules preserve evidence, but automated invariants do not establish action, legal-stage, count, person-role, or relation accuracy.",
+      "name": "candidate_layer_publication_readiness",
+      "observed": "0 event and 0 person candidates",
+      "requirement": "independent row-level adjudication before journalistic use",
+      "status": "pass"
+    }
+  ],
+  "issues": [
+    {
+      "rows": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "type": "raw_schema"
+    }
+  ],
+  "reference_profile": {
+    "duplicate_title_groups": [],
+    "invalid_modified_count": 0,
+    "invalid_modified_examples": [],
+    "invalid_published_count": 0,
+    "invalid_published_examples": [],
+    "missing_counts": {
+      "blurb_list": 0,
+      "city": 0,
+      "date_last_updated": 0,
+      "date_normalized": 0,
+      "date_raw": 0,
+      "full_text": 0,
+      "image_urls": 0,
+      "location_full_text": 0,
+      "scraped_at": 0,
+      "state": 0,
+      "subtitle": 0,
+      "title": 0,
+      "topics": 0,
+      "updated_date": 0,
+      "url": 0
+    },
+    "modification_lag": {
+      "max_days": 0,
+      "median_days": 0.0,
+      "negative": 0,
+      "p95_days": 0.0,
+      "same_day": 0,
+      "valid_pairs": 0
+    },
+    "non_us_region_labels": [],
+    "rows": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "unique_urls": 0,
+    "valid_modified_dates": 0,
+    "valid_published_dates": 0,
+    "year_counts": {}
+  },
+  "row_accounting": {
+    "accepted": 0,
+    "events": 0,
+    "input": 50,
+    "people": 0,
+    "quarantined": 50
+  },
+  "status": "fail"
+}

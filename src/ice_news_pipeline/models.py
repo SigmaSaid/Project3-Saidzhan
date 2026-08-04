@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ParseStatus(str, Enum):
@@ -25,9 +25,9 @@ class PersonCandidate:
     mention_id: str
     document_id: str
     name_raw: str
-    age: Optional[int] = None
-    residence_raw: Optional[str] = None
-    origin_country_raw: Optional[str] = None
+    age: int | None = None
+    residence_raw: str | None = None
+    origin_country_raw: str | None = None
     evidence_text: str = ""
     evidence_start: int = 0
     evidence_end: int = 0
@@ -36,11 +36,7 @@ class PersonCandidate:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            key: (
-                value.value
-                if isinstance(value, Enum)
-                else value
-            )
+            key: (value.value if isinstance(value, Enum) else value)
             for key, value in self.__dict__.items()
         }
 
@@ -51,9 +47,9 @@ class EventCandidate:
     document_id: str
     action_type: str
     legal_stage: str
-    count_min: Optional[int] = None
-    count_max: Optional[int] = None
-    count_qualifier: Optional[str] = None
+    count_min: int | None = None
+    count_max: int | None = None
+    count_qualifier: str | None = None
     evidence_text: str = ""
     evidence_start: int = 0
     evidence_end: int = 0
@@ -62,87 +58,77 @@ class EventCandidate:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            key: (
-                value.value
-                if isinstance(value, Enum)
-                else value
-            )
+            key: (value.value if isinstance(value, Enum) else value)
             for key, value in self.__dict__.items()
         }
 
+
 @dataclass
 class ICEDocument:
-
-    document_id: Optional[str] = None
+    document_id: str = ""
 
     url: str = ""
-    input_url: Optional[str] = None
-    canonical_url: Optional[str] = None
-    source_sha256: Optional[str] = None
+    input_url: str | None = None
+    canonical_url: str | None = None
+    source_sha256: str | None = None
 
     title: str = ""
-    subtitle: Optional[str] = None
-    description: Optional[str] = None
-    topics: List[str] = field(default_factory=list)
+    subtitle: str | None = None
+    description: str | None = None
+    topics: list[str] = field(default_factory=list)
 
-    date_raw: Optional[str] = None
-    date_normalized: Optional[str] = None
-    date_last_updated: Optional[str] = None
-    published_date: Optional[str] = None
-    modified_date: Optional[str] = None
-    updated_date: Optional[str] = None
+    date_raw: str | None = None
+    date_normalized: str | None = None
+    date_last_updated: str | None = None
+    published_date: str | None = None
+    modified_date: str | None = None
+    updated_date: str | None = None
 
-    dateline: Optional[str] = None
-    dateline_raw: Optional[str] = None
-    dateline_city: Optional[str] = None
-    dateline_region: Optional[str] = None
-    dateline_region_code: Optional[str] = None
-    dateline_country: Optional[str] = None
+    dateline: str | None = None
+    dateline_raw: str | None = None
+    dateline_city: str | None = None
+    dateline_region: str | None = None
+    dateline_region_code: str | None = None
+    dateline_country: str | None = None
 
-    city: Optional[str] = None
-    state: Optional[str] = None
-    location_full_text: Optional[str] = None
+    city: str | None = None
+    state: str | None = None
+    location_full_text: str | None = None
 
     full_text: str = ""
     body_text: str = ""
 
-    paragraphs: List[str] = field(default_factory=list)
-    tables: List[Dict[str, Any]] = field(default_factory=list)
+    paragraphs: list[str] = field(default_factory=list)
+    tables: list[dict[str, Any]] = field(default_factory=list)
 
     word_count: int = 0
     paragraph_count: int = 0
 
-    image_urls: List[str] = field(default_factory=list)
+    image_urls: list[str] = field(default_factory=list)
 
-    scraped_at: Optional[str] = None
+    scraped_at: str | None = None
 
     document_type: str = "news_release"
 
-    parse_status: Optional[ParseStatus] = None
+    parse_status: ParseStatus = ParseStatus.QUARANTINED
 
     is_quarantined: bool = False
-    quarantine_reason: Optional[str] = None
+    quarantine_reason: str | None = None
 
-    entity_bundle: Optional[str] = None
+    entity_bundle: str | None = None
 
-    quality_flags: List[str] = field(default_factory=list)
+    quality_flags: list[str] = field(default_factory=list)
 
-    field_provenance: Dict[str, str] = field(default_factory=dict)
-    field_confidence: Dict[str, float] = field(default_factory=dict)
+    field_provenance: dict[str, str] = field(default_factory=dict)
+    field_confidence: dict[str, float] = field(default_factory=dict)
 
-    blurb_list: List[str] = field(default_factory=list)
+    blurb_list: list[str] = field(default_factory=list)
 
-
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
-            key: (
-                value.value
-                if isinstance(value, Enum)
-                else value
-            )
+            key: (value.value if isinstance(value, Enum) else value)
             for key, value in self.__dict__.items()
         }
-
 
 
 @dataclass
@@ -165,7 +151,7 @@ class ValidationGate:
     requirement: str = ""
     detail: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "status": self.status.value,
@@ -179,39 +165,32 @@ class ValidationGate:
 class ValidationResult:
     status: GateStatus = GateStatus.SKIPPED
 
-    gates: List[ValidationGate] = field(default_factory=list)
-    field_metrics: List[FieldMetric] = field(default_factory=list)
+    gates: list[ValidationGate] = field(default_factory=list)
+    field_metrics: list[FieldMetric] = field(default_factory=list)
 
-    reference_profile: Dict[str, Any] = field(default_factory=dict)
-    document_profile: Dict[str, Any] = field(default_factory=dict)
-    body_similarity: Dict[str, Any] = field(default_factory=dict)
+    reference_profile: dict[str, Any] = field(default_factory=dict)
+    document_profile: dict[str, Any] = field(default_factory=dict)
+    body_similarity: dict[str, Any] = field(default_factory=dict)
 
-    row_accounting: Dict[str, Any] = field(default_factory=dict)
+    row_accounting: dict[str, Any] = field(default_factory=dict)
 
-    issues: List[Dict[str, Any]] = field(default_factory=list)
+    issues: list[dict[str, Any]] = field(default_factory=list)
 
     @property
     def passed(self) -> bool:
         return self.status != GateStatus.FAIL
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "status": self.status.value,
-            "gates": [
-                gate.to_dict()
-                if hasattr(gate, "to_dict")
-                else gate
-                for gate in self.gates
-            ],
-            "field_metrics": [
-                metric.__dict__
-                for metric in self.field_metrics
-            ],
+            "gates": [gate.to_dict() if hasattr(gate, "to_dict") else gate for gate in self.gates],
+            "field_metrics": [metric.__dict__ for metric in self.field_metrics],
             "reference_profile": self.reference_profile,
             "document_profile": self.document_profile,
             "body_similarity": self.body_similarity,
             "row_accounting": self.row_accounting,
             "issues": self.issues,
         }
-        
+
+
 DocumentRecord = ICEDocument

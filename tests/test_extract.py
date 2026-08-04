@@ -29,9 +29,7 @@ def test_extracts_release_with_provenance_and_scoped_body(release_html: str) -> 
     assert "footer" not in (document.body_text or "").casefold()
     assert document.field_provenance["body_text"] == "css:.nr-body"
     assert document.field_confidence["topics"] == 1.0
-    assert document.image_urls == [
-        "https://www.ice.gov/sites/default/files/hero.jpg"
-    ]
+    assert document.image_urls == ["https://www.ice.gov/sites/default/files/hero.jpg"]
     assert document.tables == [
         {
             "table_index": 0,

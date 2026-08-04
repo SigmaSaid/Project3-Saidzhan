@@ -119,7 +119,7 @@ def _count_before_action(
         return None
 
     _, _, nearest, is_range = max(matches, key=lambda item: (item[0], item[1]))
-    bridge = prefix[nearest.end():]
+    bridge = prefix[nearest.end() :]
     if len(bridge) > 60 or _CLAUSE_BREAK_RE.search(bridge):
         return None
     if is_range:

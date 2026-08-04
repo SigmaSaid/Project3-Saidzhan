@@ -1,19 +1,15 @@
-import re
 import json
+import re
 from urllib.parse import urljoin
-from bs4 import BeautifulSoup, Tag
+
+from bs4 import Tag
 
 from ice_news_pipeline.constants import BODY_SELECTOR
 from ice_news_pipeline.normalize import (
-    iso_date,
     normalize_text,
-    normalize_url,
-    tokens,
 )
 
-_TITLE_SUFFIX_RE = re.compile(
-    r"\s*\|\s*U\.S\. Immigration and Customs Enforcement$"
-)
+_TITLE_SUFFIX_RE = re.compile(r"\s*\|\s*U\.S\. Immigration and Customs Enforcement$")
 
 
 def _field(value, name, method, confidence, provenance, confidences):
@@ -98,9 +94,7 @@ def _extract_topic_fallback(node):
         return None
     tail_parts = []
     for sibling in separators[1].next_siblings:
-        tail_parts.append(
-            sibling.get_text() if isinstance(sibling, Tag) else str(sibling)
-        )
+        tail_parts.append(sibling.get_text() if isinstance(sibling, Tag) else str(sibling))
     return normalize_text("".join(tail_parts))
 
 
@@ -114,9 +108,7 @@ def _header_metadata(soup):
     for child in meta_node.children:
         if isinstance(child, Tag) and child.name == "i":
             break
-        parts_before_i.append(
-            child.get_text() if isinstance(child, Tag) else str(child)
-        )
+        parts_before_i.append(child.get_text() if isinstance(child, Tag) else str(child))
     date_raw = normalize_text("".join(parts_before_i))
 
     city = None
@@ -128,11 +120,7 @@ def _header_metadata(soup):
     if isinstance(locality_node, Tag):
         city = normalize_text(locality_node.get_text(" ", strip=True))
 
-    other_spans = [
-        span
-        for span in meta_node.find_all("span")
-        if span is not locality_node
-    ]
+    other_spans = [span for span in meta_node.find_all("span") if span is not locality_node]
 
     def _clean(text: str | None) -> str | None:
         if text is None:
@@ -179,17 +167,11 @@ def extract_image_urls(soup, base_url=None):
 def extract_tables(soup):
     tables = []
     for index, table in enumerate(soup.find_all("table")):
-        headers = [
-            normalize_text(th.get_text(" ", strip=True))
-            for th in table.select("thead th")
-        ]
+        headers = [normalize_text(th.get_text(" ", strip=True)) for th in table.select("thead th")]
         body = table.find("tbody") or table
         rows = []
         for tr in body.find_all("tr"):
-            cells = [
-                normalize_text(td.get_text(" ", strip=True))
-                for td in tr.find_all("td")
-            ]
+            cells = [normalize_text(td.get_text(" ", strip=True)) for td in tr.find_all("td")]
             if cells:
                 rows.append(cells)
         tables.append({"table_index": index, "headers": headers, "rows": rows})

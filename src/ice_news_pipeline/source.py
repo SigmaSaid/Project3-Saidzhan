@@ -62,28 +62,42 @@ def load_huggingface_inputs(
     split: str = "train",
     limit: int | None = None,
     cache_dir: str | Path | None = None,
+    html_config: str = "html",
+    reference_config: str = "default",
 ) -> LoadedInputs:
     from datasets import load_dataset
 
-    dataset = load_dataset(
+    raw_dataset = load_dataset(
         dataset_id,
+        name=html_config,
+        revision=revision,
+        split=split,
+        cache_dir=cache_dir,
+    )
+    reference_dataset = load_dataset(
+        dataset_id,
+        name=reference_config,
         revision=revision,
         split=split,
         cache_dir=cache_dir,
     )
 
     if limit is not None:
-        dataset = dataset.select(
-            range(min(limit, len(dataset)))
+        raw_dataset = raw_dataset.select(range(min(limit, len(raw_dataset))))
+        reference_dataset = reference_dataset.select(
+            range(min(limit, len(reference_dataset)))
         )
 
     return LoadedInputs(
-        raw=[dict(row) for row in dataset],
-        reference=[],
+        raw=[dict(row) for row in raw_dataset],
+        reference=[dict(row) for row in reference_dataset],
         metadata={
             "source": dataset_id,
+            "dataset_id": dataset_id,
             "revision": revision,
             "split": split,
             "limit": limit,
+            "html_config": html_config,
+            "reference_config": reference_config,
         },
     )

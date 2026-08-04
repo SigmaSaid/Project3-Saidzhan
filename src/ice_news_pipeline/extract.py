@@ -4,6 +4,7 @@ from urllib.parse import urlsplit
 
 from bs4 import BeautifulSoup, Tag
 
+from ice_news_pipeline.constants import BODY_SELECTOR
 from ice_news_pipeline.models import DocumentRecord, ParseStatus
 from ice_news_pipeline.normalize import (
     iso_date,
@@ -13,7 +14,6 @@ from ice_news_pipeline.normalize import (
 )
 from ice_news_pipeline.utils import (
     _TITLE_SUFFIX_RE,
-    BODY_SELECTOR,
     _decode_data_layer,
     _extract_body,
     _extract_dateline,
@@ -35,8 +35,9 @@ def extract_document(example: dict[str, Any] | str, html_str: str | None = None)
         row: dict[str, Any] = {}
     else:
         row = example
-        input_url = normalize_url(
-            row.get("url") or row.get("input_url") or row.get("source_url") or ""
+        input_url = (
+            normalize_url(row.get("url") or row.get("input_url") or row.get("source_url") or "")
+            or ""
         )
         raw_html = str(
             row.get("html")
@@ -50,8 +51,11 @@ def extract_document(example: dict[str, Any] | str, html_str: str | None = None)
     # Искусственная генерация HTML, если исходный сырой HTML отсутствует
     if not raw_html and isinstance(example, dict):
         title = normalize_text(str(row.get("title") or ""))
-        body = normalize_text(
-            str(row.get("full_text") or row.get("body_text") or row.get("text") or "")
+        body = (
+            normalize_text(
+                str(row.get("full_text") or row.get("body_text") or row.get("text") or "")
+            )
+            or ""
         )
         subtitle = normalize_text(str(row.get("subtitle") or ""))
 
@@ -88,9 +92,8 @@ def extract_document(example: dict[str, Any] | str, html_str: str | None = None)
 
     # 1. Canonical URL
     canonical_node = soup.find("link", rel="canonical")
-    canonical = (
-        normalize_url(canonical_node.get("href")) if isinstance(canonical_node, Tag) else None
-    )
+    canonical_href = canonical_node.get("href") if isinstance(canonical_node, Tag) else None
+    canonical = normalize_url(canonical_href) if isinstance(canonical_href, str) else None
     canonical = _field(
         canonical,
         "canonical_url",
@@ -377,7 +380,7 @@ def extract_document(example: dict[str, Any] | str, html_str: str | None = None)
     }
 
     try:
-        return DocumentRecord(**data_dict)
+        return DocumentRecord(**data_dict)  # type: ignore[arg-type]
     except TypeError:
         return DocumentRecord(
             url=input_url,
@@ -404,5 +407,5 @@ def extract_document(example: dict[str, Any] | str, html_str: str | None = None)
         )
 
 
-def extract_documents(records, workers=1):
+def extract_documents(records: list[dict[str, Any]], workers: int = 1) -> list[DocumentRecord]:
     return [extract_document(row) for row in records]

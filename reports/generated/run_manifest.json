@@ -1,0 +1,40 @@
+{
+  "created_at_utc": "2026-08-04T03:17:58.123351+00:00",
+  "parameters": {
+    "audit_seed": 20260729,
+    "audit_size": 30,
+    "extract_candidates": true,
+    "workers": 4
+  },
+  "parser_version": "1.0.0",
+  "pipeline_version": "1.0.0",
+  "result": {
+    "accepted": 964,
+    "events": 5677,
+    "input": 965,
+    "people": 542,
+    "quarantined": 1,
+    "status": "warn"
+  },
+  "runtime": {
+    "dependencies": {
+      "beautifulsoup4": "4.15.0",
+      "datasets": "4.8.5",
+      "lxml": "6.1.1",
+      "matplotlib": "3.11.1",
+      "pandas": "2.3.3",
+      "pyarrow": "23.0.1"
+    },
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.13.1"
+  },
+  "source": {
+    "dataset_id": "stanforddams/biglocal",
+    "html_config": "html",
+    "limit": null,
+    "reference_config": "default",
+    "revision": "4e9cd487de2b4781bc40b39a92295b0ee6827034",
+    "source": "stanforddams/biglocal",
+    "split": "train"
+  }
+}

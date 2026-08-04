@@ -1,53 +1,77 @@
+from __future__ import annotations
+
 import json
 import re
+from typing import Any
 from urllib.parse import urljoin
 
-from bs4 import Tag
+from bs4 import BeautifulSoup, PageElement, Tag
 
 from ice_news_pipeline.constants import BODY_SELECTOR
-from ice_news_pipeline.normalize import (
-    normalize_text,
-)
+from ice_news_pipeline.normalize import normalize_text
 
 _TITLE_SUFFIX_RE = re.compile(r"\s*\|\s*U\.S\. Immigration and Customs Enforcement$")
 
+# Block-level tags that carry real body content inside .nr-body / article.
+# Roundup-style releases put arrestee lists in <li> rather than <p>, so both
+# must be captured or large chunks of body text are silently dropped.
+_BODY_BLOCK_TAGS = ("p", "li")
 
-def _field(value, name, method, confidence, provenance, confidences):
+
+def _field(
+    value: str | None,
+    name: str,
+    method: str,
+    confidence: float,
+    provenance: dict[str, str],
+    confidences: dict[str, float],
+) -> str | None:
     if value is not None:
         provenance[name] = method
         confidences[name] = confidence
     return value
 
 
-def _meta_content(soup, attr, key):
+def _meta_content(soup: BeautifulSoup, attr: str, key: str) -> str | None:
     node = soup.find("meta", attrs={attr: key})
     if isinstance(node, Tag):
-        return node.get("content")
+        content = node.get("content")
+        return content if isinstance(content, str) else None
     return None
 
 
-def _decode_data_layer(soup):
+def _decode_data_layer(soup: BeautifulSoup) -> dict[str, Any]:
     for script in soup.find_all("script"):
         text = script.string or ""
         if "entityTaxonomy" in text or "entityBundle" in text:
             try:
                 start = text.find("{")
                 end = text.rfind("}") + 1
-                return json.loads(text[start:end])
+                result: dict[str, Any] = json.loads(text[start:end])
+                return result
             except Exception:
                 pass
     return {}
 
 
-def _extract_body(soup):
+def _collect_blocks(container: Tag) -> list[str]:
+    """Extract normalized text from every content block (paragraph or list item),
+    in document order, skipping nested duplicates (e.g. <li> inside another <li>
+    is walked once via find_all, which is already document-order and non-nested
+    for typical <ul>/<ol> markup)."""
+    return [
+        text
+        for block in container.find_all(_BODY_BLOCK_TAGS)
+        if block.get_text(strip=True)
+        and (text := normalize_text(block.get_text(" ", strip=True))) is not None
+    ]
+
+
+def _extract_body(soup: BeautifulSoup) -> tuple[str, list[str], str | None, float]:
     body = soup.select_one(BODY_SELECTOR)
 
     if isinstance(body, Tag):
-        paragraphs = [
-            normalize_text(p.get_text(" ", strip=True))
-            for p in body.find_all("p")
-            if p.get_text(strip=True)
-        ]
+        paragraphs = _collect_blocks(body)
         return (
             "\n".join(paragraphs),
             paragraphs,
@@ -58,11 +82,7 @@ def _extract_body(soup):
     article = soup.select_one("article")
 
     if isinstance(article, Tag):
-        paragraphs = [
-            normalize_text(p.get_text(" ", strip=True))
-            for p in article.find_all("p")
-            if p.get_text(strip=True)
-        ]
+        paragraphs = _collect_blocks(article)
         return (
             "\n".join(paragraphs),
             paragraphs,
@@ -76,7 +96,7 @@ def _extract_body(soup):
 _DASH_SPLIT_RE = re.compile(r"\s*[—–]\s*|\s+-\s+")
 
 
-def _extract_dateline(paragraphs):
+def _extract_dateline(paragraphs: list[str]) -> str | None:
     if not paragraphs:
         return None
     first = paragraphs[0]
@@ -86,7 +106,7 @@ def _extract_dateline(paragraphs):
     return None
 
 
-def _extract_topic_fallback(node):
+def _extract_topic_fallback(node: PageElement | None) -> str | None:
     if not isinstance(node, Tag):
         return None
     separators = node.find_all("i")
@@ -98,7 +118,9 @@ def _extract_topic_fallback(node):
     return normalize_text("".join(tail_parts))
 
 
-def _header_metadata(soup):
+def _header_metadata(
+    soup: BeautifulSoup,
+) -> tuple[str | None, str | None, str | None, str | None, str | None]:
     meta_node = soup.select_one(".nr-meta")
     if not isinstance(meta_node, Tag):
         return None, None, None, None, None
@@ -144,19 +166,19 @@ def _header_metadata(soup):
     return date_raw, city, region, region_code, country
 
 
-def extract_image_urls(soup, base_url=None):
-    urls = []
+def extract_image_urls(soup: BeautifulSoup, base_url: str | None = None) -> list[str]:
+    urls: list[str] = []
 
     for anchor in soup.select(".colorbox-image-grid a.colorbox"):
         href = anchor.get("href")
-        if href:
+        if isinstance(href, str):
             resolved = urljoin(base_url or "", href) if base_url else href
             if resolved not in urls:
                 urls.append(resolved)
 
     for img in soup.select(".nr-body img"):
         src = img.get("src")
-        if src:
+        if isinstance(src, str):
             resolved = urljoin(base_url or "", src) if base_url else src
             if resolved not in urls:
                 urls.append(resolved)
@@ -164,14 +186,22 @@ def extract_image_urls(soup, base_url=None):
     return urls
 
 
-def extract_tables(soup):
+def extract_tables(soup: BeautifulSoup) -> list[dict[str, Any]]:
     tables = []
     for index, table in enumerate(soup.find_all("table")):
-        headers = [normalize_text(th.get_text(" ", strip=True)) for th in table.select("thead th")]
+        headers = [
+            text
+            for th in table.select("thead th")
+            if (text := normalize_text(th.get_text(" ", strip=True))) is not None
+        ]
         body = table.find("tbody") or table
         rows = []
         for tr in body.find_all("tr"):
-            cells = [normalize_text(td.get_text(" ", strip=True)) for td in tr.find_all("td")]
+            cells = [
+                text
+                for td in tr.find_all("td")
+                if (text := normalize_text(td.get_text(" ", strip=True))) is not None
+            ]
             if cells:
                 rows.append(cells)
         tables.append({"table_index": index, "headers": headers, "rows": rows})

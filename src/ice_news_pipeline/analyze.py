@@ -7,6 +7,8 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from matplotlib.axes import Axes
+
 os.environ.setdefault(
     "MPLCONFIGDIR",
     str(Path(tempfile.gettempdir()) / "ice-news-pipeline-matplotlib"),
@@ -219,7 +221,7 @@ def build_analysis_tables(documents: list[DocumentRecord]) -> dict[str, pd.DataF
     }
 
 
-def _style_axis(axis: plt.Axes) -> None:
+def _style_axis(axis: Axes) -> None:
     axis.spines["top"].set_visible(False)
     axis.spines["right"].set_visible(False)
     axis.spines["left"].set_color(LIGHT)

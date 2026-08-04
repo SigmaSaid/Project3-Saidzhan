@@ -1,0 +1,19 @@
+field,method,documents,share_within_field
+body_text,css:.nr-body,964,0.9989637305699481
+body_text,css:article,1,0.0010362694300518134
+canonical_url,link[rel=canonical],965,1.0
+date_raw,css:.nr-meta,964,1.0
+dateline_city,css:.nr-meta,964,1.0
+dateline_country,css:.nr-meta,964,1.0
+dateline_raw,regex:first_body_block,952,1.0
+dateline_region,css:.nr-meta,964,1.0
+dateline_region_code,css:.nr-meta,964,1.0
+description,meta:description,964,1.0
+entity_bundle,json:dataLayer.entityBundle,965,1.0
+image_urls,dataset,548,1.0
+modified_date,meta:article:modified_time,965,1.0
+published_date,meta:article:published_time,965,1.0
+subtitle,css:.nr-subtitle,176,1.0
+title,css:.nr-title h1,964,0.9989637305699481
+title,meta:og:title,1,0.0010362694300518134
+topics,json:dataLayer.entityTaxonomy.news_release_topics,964,1.0

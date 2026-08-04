@@ -9,7 +9,6 @@ from bs4 import BeautifulSoup, PageElement, Tag
 from ice_news_pipeline.constants import BODY_SELECTOR
 from ice_news_pipeline.normalize import normalize_text
 
-
 _TITLE_SUFFIX_RE = re.compile(r"\s*\|\s*U\.S\. Immigration and Customs Enforcement$")
 
 
@@ -35,14 +34,15 @@ def _meta_content(soup: BeautifulSoup, attr: str, key: str) -> str | None:
     return None
 
 
-def _decode_data_layer(soup: BeautifulSoup) -> dict:
+def _decode_data_layer(soup: BeautifulSoup) -> dict[str, Any]:
     for script in soup.find_all("script"):
         text = script.string or ""
         if "entityTaxonomy" in text or "entityBundle" in text:
             try:
                 start = text.find("{")
                 end = text.rfind("}") + 1
-                return json.loads(text[start:end])
+                result: dict[str, Any] = json.loads(text[start:end])
+                return result
             except Exception:
                 pass
     return {}
@@ -177,7 +177,7 @@ def extract_image_urls(soup: BeautifulSoup, base_url: str | None = None) -> list
     return urls
 
 
-def extract_tables(soup: BeautifulSoup) -> list[dict]:
+def extract_tables(soup: BeautifulSoup) -> list[dict[str, Any]]:
     tables = []
     for index, table in enumerate(soup.find_all("table")):
         headers = [

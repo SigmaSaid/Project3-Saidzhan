@@ -396,7 +396,7 @@ def extract_document(
     }
 
     try:
-        return DocumentRecord(**data_dict)
+        return DocumentRecord(**data_dict)  # type: ignore[arg-type]
     except TypeError:
         return DocumentRecord(
             url=input_url,

@@ -1,7 +1,8 @@
 from __future__ import annotations
-from typing import Any
+
 import json
 import re
+from typing import Any
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup, PageElement, Tag
@@ -9,7 +10,13 @@ from bs4 import BeautifulSoup, PageElement, Tag
 from ice_news_pipeline.constants import BODY_SELECTOR
 from ice_news_pipeline.normalize import normalize_text
 
+
 _TITLE_SUFFIX_RE = re.compile(r"\s*\|\s*U\.S\. Immigration and Customs Enforcement$")
+
+# Block-level tags that carry real body content inside .nr-body / article.
+# Roundup-style releases put arrestee lists in <li> rather than <p>, so both
+# must be captured or large chunks of body text are silently dropped.
+_BODY_BLOCK_TAGS = ("p", "li")
 
 
 def _field(
@@ -48,16 +55,24 @@ def _decode_data_layer(soup: BeautifulSoup) -> dict[str, Any]:
     return {}
 
 
+def _collect_blocks(container: Tag) -> list[str]:
+    """Extract normalized text from every content block (paragraph or list item),
+    in document order, skipping nested duplicates (e.g. <li> inside another <li>
+    is walked once via find_all, which is already document-order and non-nested
+    for typical <ul>/<ol> markup)."""
+    return [
+        text
+        for block in container.find_all(_BODY_BLOCK_TAGS)
+        if block.get_text(strip=True)
+        and (text := normalize_text(block.get_text(" ", strip=True))) is not None
+    ]
+
+
 def _extract_body(soup: BeautifulSoup) -> tuple[str, list[str], str | None, float]:
     body = soup.select_one(BODY_SELECTOR)
 
     if isinstance(body, Tag):
-        paragraphs = [
-            text
-            for p in body.find_all("p")
-            if p.get_text(strip=True)
-            and (text := normalize_text(p.get_text(" ", strip=True))) is not None
-        ]
+        paragraphs = _collect_blocks(body)
         return (
             "\n".join(paragraphs),
             paragraphs,
@@ -68,12 +83,7 @@ def _extract_body(soup: BeautifulSoup) -> tuple[str, list[str], str | None, floa
     article = soup.select_one("article")
 
     if isinstance(article, Tag):
-        paragraphs = [
-            text
-            for p in article.find_all("p")
-            if p.get_text(strip=True)
-            and (text := normalize_text(p.get_text(" ", strip=True))) is not None
-        ]
+        paragraphs = _collect_blocks(article)
         return (
             "\n".join(paragraphs),
             paragraphs,
